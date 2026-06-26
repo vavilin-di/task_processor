@@ -34,7 +34,9 @@ async def create_task(
     async with session.begin():
         task_model = await tasks_repo.create(**task.model_dump())
         # TODO: уточнить происхождение, содержимое и формат (?) payload
-        outbox_message = OutboxMessageCreate(routing_key=ROUTING_KEY, aggregate_id=task_model.id, payload={})
+        outbox_message = OutboxMessageCreate(
+            routing_key=ROUTING_KEY, aggregate_id=task_model.id, payload=task_model.payload
+        )
         await outbox_messages_repo.create(**outbox_message.model_dump())
         return task_model
 
