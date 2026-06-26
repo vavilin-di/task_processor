@@ -5,9 +5,9 @@ class OutboxMessageCreate(BaseModel):
     routing_key: str
     aggregate_id: int
     payload: dict
-    is_published: bool = False
-    is_active: bool = True
 
 
-class OutboxMessage(OutboxMessageCreate):
+class OutboxMessage(BaseModel):
     id: int
+    routing_key: str
+    payload: dict
