@@ -21,7 +21,7 @@ dev:
 	uv run uvicorn src:app --host $(HOST) --port $(PORT) --reload
 
 start_outbox_publish_worker:
-	uv run -m src.workers.run_outbox_publish_worker
+	uv run -m src.workers.outbox_publisher.run_outbox_publish_worker
 
 start_main_app:
 	uv run uvicorn src:app --host $(HOST) --port $(PORT) --workers $(WORKERS_COUNT)
