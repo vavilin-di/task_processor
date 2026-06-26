@@ -22,7 +22,7 @@ class OutboxMessage(Base):
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    aggregate_id: Mapped[int] = mapped_column(ForeignKey("tasks.id"), nullable=False, ondelete="CASCADE")
+    aggregate_id: Mapped[int] = mapped_column(ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False)
     routing_key: Mapped[str] = mapped_column(String(255), nullable=False)
     payload: Mapped[dict] = mapped_column(JSON(), nullable=False)
     is_published: Mapped[bool] = mapped_column(Boolean(), nullable=False, server_default=false())
