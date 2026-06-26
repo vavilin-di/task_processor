@@ -12,13 +12,7 @@ class TaskCreate(BaseModel):
     name: str
     description: str
     priority: TaskPriority = TaskPriority.MEDIUM
-    status: TaskStatus = TaskStatus.NEW
-    created_at: datetime | None
-    started_at: datetime | None
-    finished_at: datetime | None = None
-    result: dict
-    errors: list[str] | None
-    is_active: bool = True
+    payload: dict
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -44,7 +38,10 @@ class TaskFilter(BaseModel):
     description: str | None = None
     priority: TaskPriority | None = None
     status: TaskStatus | None = None
-    created_at: datetime | None = None
-    started_at: datetime | None = None
-    finished_at: datetime | None = None
+    created_at_from: datetime | None = None
+    created_at_to: datetime | None = None
+    started_at_from: datetime | None = None
+    started_at_to: datetime | None = None
+    finished_at_from: datetime | None = None
+    finished_at_to: datetime | None = None
     is_active: bool | None = None
