@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from src.messaging.queues import MAIN_QUEUE
 from src.repositories.outbox_messages import OutboxMessageRepository
 
-from .utilities import use_broker
+from ..utilities import use_broker
 
 logger = logging.getLogger(__name__)
 
