@@ -5,7 +5,7 @@ from dishka import AsyncContainer
 from faststream.rabbit import RabbitBroker
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from src.messaging.queues import MAIN_QUEUE
+from src.messaging.queues import TASKS_QUEUE
 from src.repositories.outbox_messages import OutboxMessageRepository
 
 from ..utilities import use_broker
@@ -20,7 +20,7 @@ async def process_batch(
         get_not_published_tasks = await outbox_messages_repo.get_not_published_tasks()
         for task in get_not_published_tasks:
             try:
-                await broker.publish(task.payload, MAIN_QUEUE, routing_key=task.routing_key)
+                await broker.publish(task.payload, TASKS_QUEUE, routing_key=task.routing_key)
                 await outbox_messages_repo.mark_task_as_published(task.id)
             except Exception as ex:
                 logger.error(f"Произошла ошибка при публикации задачи с id {task.id} в брокере: {ex}")
