@@ -17,9 +17,11 @@ async def use_broker(broker: RabbitBroker, logger: Logger) -> AsyncGenerator[Non
     except CancelledError as ex:
         logger.info(f"Брокер {broker_repr} остановлен")
         exception_type = ex
+        raise
     except Exception as ex:
         logger.error(f"Во время работы брокера {broker_repr} произошла ошибка: {ex}")
         exception_type = ex
+        raise
     finally:
         if exception_type is None:
             await broker.stop()
