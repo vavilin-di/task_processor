@@ -1,37 +1,38 @@
-from sqlalchemy import not_, select
+from typing import Any
 
-from src.database.models.outbox_messages import OutboxMessage as OutboxMessageModel
-from src.schemas.outbox_messages import OutboxMessage
+from sqlalchemy import not_, select, update
+
+from src.database.models.outbox_messages import OutboxMessage as OutboxMessage
 
 from .sqlalchemy_repository import SQLAlchemyRepository
 
 MAX_PUBLISH_ERRORS_COUNT = 5
 
 
-class OutboxMessageRepository(SQLAlchemyRepository[OutboxMessageModel]):
-
-    async def get_not_published_tasks(self, limit: int = 10) -> list[OutboxMessage]:
+class OutboxMessageRepository(SQLAlchemyRepository[OutboxMessage]):
+    async def get_not_published_outbox_messages(self, limit: int = 10) -> list[tuple[int, str, dict[str, Any]]]:
         statement = (
-            select(OutboxMessageModel.id, OutboxMessageModel.routing_key, OutboxMessageModel.payload)
-            .where(not_(OutboxMessageModel.is_published), not_(OutboxMessageModel.is_failed))
-            .order_by(OutboxMessageModel.created_at.asc())
+            select(OutboxMessage.id, OutboxMessage.routing_key, OutboxMessage.payload)
+            .where(not_(OutboxMessage.is_published), not_(OutboxMessage.is_failed))
+            .order_by(OutboxMessage.created_at.asc())
             .limit(limit)
             .with_for_update(skip_locked=True)
         )
-        return [
-            OutboxMessage(id=id, routing_key=routing_key, payload=payload)
-            for id, routing_key, payload in (await self._session.execute(statement)).t.all()
-        ]
+        return list((await self._session.execute(statement)).t.all())
 
     async def mark_task_as_published(self, task_id: int) -> None:
         await self.update(task_id, is_published=True)
 
     async def add_error(self, task_id: int, error: str) -> None:
-        message = await self.get(task_id)
-        if message is None:
+        returning_update_statement = (
+            update(OutboxMessage)
+            .where(OutboxMessage.id == task_id)
+            .values(errors=[*OutboxMessage.errors, error])
+            .returning(OutboxMessage.errors)
+        )
+        result = await self._session.execute(returning_update_statement)
+        updated_errors = result.scalar_one_or_none()
+        if updated_errors is None:
             raise AssertionError(f"OutboxMessage с id={task_id} не найдено")
-        message.errors.append(error)
-        if len(message.errors) >= MAX_PUBLISH_ERRORS_COUNT:
-            await self.update(task_id, errors=message.errors, is_failed=True)
-            return
-        await self.update(task_id, errors=message.errors)
+        if len(updated_errors) >= MAX_PUBLISH_ERRORS_COUNT:
+            await self._session.execute(update(OutboxMessage).where(OutboxMessage.id == task_id).values(is_failed=True))
