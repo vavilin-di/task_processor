@@ -1,10 +1,10 @@
 from src.database.models.tasks import Task
 from src.enums import TaskStatus
 
-from .sqlalchemy_repository import SQLAlchemyRepository
+from .soft_delete_sqlalchemy_repository import SoftDeleteSQLAlchemyRepository
 
 
-class TaskRepository(SQLAlchemyRepository[Task]):
+class TaskRepository(SoftDeleteSQLAlchemyRepository[Task]):
     async def cancel_task(self, record_id: int) -> Task | None:
         return await self.update(record_id=record_id, status=TaskStatus.CANCELLED)
 
