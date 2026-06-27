@@ -11,6 +11,8 @@ from src.database.models.tasks import Task
 from src.repositories.dlq_messages import DLQMessageRepository
 from src.repositories.outbox_messages import OutboxMessageRepository
 from src.repositories.tasks import TaskRepository
+from src.services.outbox_messages import OutboxMessageService
+from src.services.tasks import TaskService
 from src.settings import Settings, get_settings
 
 
@@ -44,6 +46,20 @@ class RepositoryProvider(Provider):
         return DLQMessageRepository(DLQMessage, session)
 
 
+class ServiceProvider(Provider):
+    @provide(scope=Scope.REQUEST)
+    def get_task_service(
+        self, task_repository: TaskRepository, outbox_repository: OutboxMessageRepository, session: AsyncSession
+    ) -> TaskService:
+        return TaskService(task_repository, outbox_repository, session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_outbox_message_service(
+        self, broker: RabbitBroker, outbox_repository: OutboxMessageRepository, session: AsyncSession
+    ) -> OutboxMessageService:
+        return OutboxMessageService(outbox_repository, broker, session)
+
+
 class BrokerProvider(Provider):
     @provide(scope=Scope.APP)
     def get_broker(self, settings: Settings) -> RabbitBroker:
@@ -57,4 +73,6 @@ class SettingsProvider(Provider):
 
 
 def create_di_container() -> AsyncContainer:
-    return make_async_container(SettingsProvider(), BrokerProvider(), DatabaseProvider(), RepositoryProvider())
+    return make_async_container(
+        SettingsProvider(), BrokerProvider(), DatabaseProvider(), RepositoryProvider(), ServiceProvider()
+    )
