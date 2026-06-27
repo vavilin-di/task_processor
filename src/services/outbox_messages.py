@@ -1,0 +1,30 @@
+import logging
+
+from faststream.rabbit import RabbitBroker
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.messaging.queues import TASKS_QUEUE
+from src.repositories.outbox_messages import OutboxMessageRepository
+
+logger = logging.getLogger(__name__)
+
+
+class OutboxMessageService:
+
+    def __init__(
+        self, outbox_messages_repository: OutboxMessageRepository, broker: RabbitBroker, session: AsyncSession
+    ) -> None:
+        self._outbox_messages_repository = outbox_messages_repository
+        self._broker = broker
+        self._session = session
+
+    async def publish_batch(self, limit: int = 10):
+        async with self._session.begin():
+            get_not_published_tasks = await self._outbox_messages_repository.get_not_published_outbox_messages(limit)
+            for task_id, routing_key, payload in get_not_published_tasks:
+                try:
+                    await self._broker.publish(payload, TASKS_QUEUE, routing_key=routing_key)
+                    await self._outbox_messages_repository.mark_task_as_published(task_id)
+                except Exception as ex:
+                    logger.error(f"Произошла ошибка при публикации задачи с id {task_id} в брокере: {ex}")
+                    await self._outbox_messages_repository.add_error(task_id, str(ex))
