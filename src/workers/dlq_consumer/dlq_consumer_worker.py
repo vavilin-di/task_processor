@@ -5,6 +5,7 @@ import logging
 
 from dishka import AsyncContainer
 from faststream.rabbit import RabbitBroker
+from faststream.rabbit.subscriber import RabbitSubscriber
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.messaging.queues import ROUTING_KEY_PROCESS, TASKS_DLQ_QUEUE, get_retry_queue
@@ -26,6 +27,7 @@ class DLQConsumerWorker:
     def __init__(self, broker: RabbitBroker, container: AsyncContainer) -> None:
         self._broker = broker
         self._container = container
+        self._subscriber = None
 
     async def run(self) -> None:
         async with use_broker(self._broker, logger):
@@ -33,16 +35,16 @@ class DLQConsumerWorker:
             await asyncio.Future()
 
     async def _register_subscriber(self) -> None:
-        @self._broker.subscriber(TASKS_DLQ_QUEUE)
-        async def handle_dlq_message(raw_message: dict) -> None:
-            message = DLQMessage(**raw_message)
-            retry_count = 0 if message.x_death is None else len(message.x_death)
-            if retry_count < MAX_DLQ_RETRIES:
-                await self._retry(message, retry_count)
-                return
-            await self._log_failure_to_db(message, retry_count)
+        self._subscriber = self._broker.subscriber(TASKS_DLQ_QUEUE)(self._handle_dlq_message)
 
-            logger.info(f"DLQ: исчерпано количество повторов после {retry_count} попыток")
+    async def _handle_dlq_message(self, raw_message: dict) -> None:
+        message = DLQMessage(**raw_message)
+        retry_count = 0 if message.x_death is None else len(message.x_death)
+        if retry_count < MAX_DLQ_RETRIES:
+            await self._retry(message, retry_count)
+            return
+        await self._log_failure_to_db(message, retry_count)
+        logger.info(f"DLQ: исчерпано количество повторов после {retry_count} попыток")
 
     async def _retry(self, message: DLQMessage, retry_count: int) -> None:
         delay = RETRY_DELAYS_MSEC[retry_count]
