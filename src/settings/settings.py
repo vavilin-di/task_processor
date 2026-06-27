@@ -1,7 +1,7 @@
 from functools import cache
-from typing import Literal
+from typing import Literal, Self
 
-from pydantic import AnyHttpUrl
+from pydantic import AnyHttpUrl, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .common import ENV_FILE_PATH
@@ -22,7 +22,7 @@ class Settings(BaseSettings):
     APP_TITLE: str = "Асинхронный сервис управления задачами"
     APP_VERSION: str = "0.1.0"
     APP_ENV: ApplicationEnvironment = "development"
-    DEBUG: bool = APP_ENV != "production"
+    DEBUG: bool = False
     LOG_LEVEL: str = "INFO"
 
     API_PREFIX: str = "/api"
@@ -33,6 +33,11 @@ class Settings(BaseSettings):
 
     postgres: PostgresSettings = PostgresSettings()
     rabbit_mq: RabbitMQSettings = RabbitMQSettings()
+
+    @model_validator(mode="after")
+    def set_debug(self) -> Self:
+        self.DEBUG = self.APP_ENV != "production"
+        return self
 
 
 @cache
