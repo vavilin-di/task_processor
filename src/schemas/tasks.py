@@ -1,6 +1,7 @@
 __all__ = ["TaskCreate", "Task"]
 
 from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel
 from pydantic.config import ConfigDict
@@ -12,7 +13,7 @@ class TaskCreate(BaseModel):
     name: str
     description: str
     priority: TaskPriority = TaskPriority.MEDIUM
-    payload: dict
+    payload: dict[str, Any]
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -44,4 +45,5 @@ class TaskFilter(BaseModel):
     started_at_to: datetime | None = None
     finished_at_from: datetime | None = None
     finished_at_to: datetime | None = None
-    is_active: bool | None = None
+
+    model_config = ConfigDict(from_attributes=True)

@@ -2,6 +2,7 @@ from datetime import datetime
 from typing import Any
 
 from pydantic import BaseModel
+from pydantic.config import ConfigDict
 
 
 class DLQMessageCreate(BaseModel):
@@ -11,6 +12,8 @@ class DLQMessageCreate(BaseModel):
     error_message: str
     retry_count: int
     x_death: list[dict[str, Any]] | None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class DLQMessage(BaseModel):
@@ -22,3 +25,5 @@ class DLQMessage(BaseModel):
     retry_count: int
     x_death: list[dict[str, Any]] | None
     created_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
