@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Iterable
 
 from sqlalchemy import not_, select, update
 
@@ -17,11 +17,15 @@ class OutboxMessageRepository(SQLAlchemyRepository[OutboxMessage]):
             .order_by(OutboxMessage.created_at.asc())
             .limit(limit)
             .with_for_update(skip_locked=True)
+            .execution_options(stream_results=True, max_row_buffer=limit)
         )
         return list((await self._session.execute(statement)).t.all())
 
-    async def mark_task_as_published(self, task_id: int) -> None:
-        await self.update(task_id, is_published=True)
+    async def mark_messages_as_published(self, message_ids: Iterable[int]) -> None:
+        batch_update_statement = (
+            update(OutboxMessage).where(OutboxMessage.id.in_(message_ids)).values(is_published=True)
+        )
+        await self._session.execute(batch_update_statement)
 
     async def add_error(self, task_id: int, error: str) -> None:
         returning_update_statement = (

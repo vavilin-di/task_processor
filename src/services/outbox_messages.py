@@ -20,11 +20,18 @@ class OutboxMessageService:
 
     async def publish_batch(self, limit: int = 10):
         async with self._session.begin():
-            get_not_published_tasks = await self._outbox_messages_repository.get_not_published_outbox_messages(limit)
-            for task_id, routing_key, payload in get_not_published_tasks:
+            messages = await self._outbox_messages_repository.get_not_published_outbox_messages(limit)
+            if len(messages) == 0:
+                return
+            published_message_ids = []
+
+            for task_id, routing_key, payload in messages:
                 try:
                     await self._broker.publish(payload, TASKS_QUEUE, routing_key=routing_key)
-                    await self._outbox_messages_repository.mark_task_as_published(task_id)
+                    published_message_ids.append(task_id)
                 except Exception as ex:
                     logger.error(f"Произошла ошибка при публикации задачи с id {task_id} в брокере: {ex}")
                     await self._outbox_messages_repository.add_error(task_id, str(ex))
+
+            if len(published_message_ids) > 0:
+                await self._outbox_messages_repository.mark_messages_as_published(published_message_ids)
