@@ -3,7 +3,7 @@ __all__ = ["OutboxMessage"]
 from datetime import datetime
 
 from sqlalchemy import DateTime, ForeignKey, Index, text
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, MappedAsDataclass, mapped_column
 from sqlalchemy.sql import false
 from sqlalchemy.sql.functions import func
 from sqlalchemy.sql.sqltypes import JSON, Boolean, String
@@ -11,7 +11,7 @@ from sqlalchemy.sql.sqltypes import JSON, Boolean, String
 from .base import Base
 
 
-class OutboxMessage(Base):
+class OutboxMessage(MappedAsDataclass, Base):
     __tablename__ = "outbox_messages"
     __table_args__ = (
         Index(
