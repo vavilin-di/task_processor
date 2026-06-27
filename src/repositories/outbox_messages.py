@@ -1,6 +1,6 @@
 from typing import Any, Iterable
 
-from sqlalchemy import not_, select, update
+from sqlalchemy import func, not_, select, update
 
 from src.database.models.outbox_messages import OutboxMessage as OutboxMessage
 
@@ -31,7 +31,7 @@ class OutboxMessageRepository(SQLAlchemyRepository[OutboxMessage]):
         returning_update_statement = (
             update(OutboxMessage)
             .where(OutboxMessage.id == task_id)
-            .values(errors=[*OutboxMessage.errors, error])
+            .values(errors=func.array_append(OutboxMessage.errors, error))
             .returning(OutboxMessage.errors)
         )
         result = await self._session.execute(returning_update_statement)
