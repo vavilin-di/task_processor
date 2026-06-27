@@ -5,8 +5,10 @@ from faststream.rabbit import RabbitBroker
 from sqlalchemy import make_url
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
 
+from src.database.models.dlq_messages import DLQMessage
 from src.database.models.outbox_messages import OutboxMessage
 from src.database.models.tasks import Task
+from src.repositories.dlq_messages import DLQMessageRepository
 from src.repositories.outbox_messages import OutboxMessageRepository
 from src.repositories.tasks import TaskRepository
 from src.settings import Settings, get_settings
@@ -36,6 +38,10 @@ class RepositoryProvider(Provider):
     @provide(scope=Scope.REQUEST)
     def get_outbox_message_repository(self, session: AsyncSession) -> OutboxMessageRepository:
         return OutboxMessageRepository(OutboxMessage, session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_dlq_message_repository(self, session: AsyncSession) -> DLQMessageRepository:
+        return DLQMessageRepository(DLQMessage, session)
 
 
 class BrokerProvider(Provider):
