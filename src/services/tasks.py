@@ -27,11 +27,10 @@ class TaskService:
     async def create_task(self, task: TaskCreate) -> TaskModel:
         async with self._session.begin():
             task_model = await self._tasks_repository.create(**task.model_dump())
-            task_model = await self._tasks_repository.create(**task.model_dump())
             outbox_message = OutboxMessageCreate(
                 routing_key=ROUTING_KEY, aggregate_id=task_model.id, payload=task_model.payload
             )
-            await self._tasks_repository.create(**outbox_message.model_dump())
+            await self._outbox_repository.create(**outbox_message.model_dump())
             return task_model
 
     async def get_tasks(
