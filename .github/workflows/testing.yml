@@ -9,6 +9,11 @@ env:
   POSTGRES_DATABASE: test_db
   POSTGRES_USER: test_user
   POSTGRES_PASSWORD: test_pass
+  RABBITMQ_HOST: localhost
+  RABBITMQ_PORT: 5672
+  RABBITMQ_USER: guest
+  RABBITMQ_PASSWORD: guest
+  RABBITMQ_VIRTUAL_HOST: /
 
 jobs:
   unit-tests:
