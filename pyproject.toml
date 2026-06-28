@@ -20,7 +20,6 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "aiosqlite>=0.22.1",
     "black>=26.5.1",
     "debugpy>=1.8.21",
     "httpx>=0.28.1",
