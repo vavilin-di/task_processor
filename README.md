@@ -70,39 +70,6 @@
 └─────────────────────────────────────────────────────────┘
 ```
 
-### Паттерн Transactional Outbox
-
-```mermaid
-flowchart LR
-    Client["Клиент (HTTP)"] -->|POST /tasks| API["FastAPI"]
-    API -->|1. Создать задачу| DB[("PostgreSQL")]
-    API -->|2. Запись в outbox (одна транзакция)| DB
-    DB -->|3. Опрос outbox| Worker["Outbox Publisher"]
-    Worker -->|4. Публикация| RMQ[("RabbitMQ")]
-    RMQ -->|5. Обработка| Consumer["DLQ Consumer"]
-    RMQ -->|6. Ошибка → DLX| DLQ["Dead-Letter Queue"]
-    DLQ -->|7. Retry| Consumer
-    Consumer -->|8. После 3 попыток| DBFail[("DLQMessage в БД")]
-
-    style Client fill:#e1f5fe
-    style API fill:#c8e6c9
-    style DB fill:#fff9c4
-    style Worker fill:#ffe0b2
-    style RMQ fill:#f8bbd0
-    style Consumer fill:#d1c4e9
-    style DLQ fill:#ffcdd2
-    style DBFail fill:#fff9c4
-```
-
-**Как это работает:**
-
-1. При создании задачи в одной транзакции записываются данные в таблицы `tasks` и `outbox_messages`
-2. **Outbox Publisher Worker** циклически опрашивает `outbox_messages` (каждые 0.5 с) и публикует неопубликованные сообщения в RabbitMQ
-3. При успешной публикации сообщение помечается `is_published = true`
-4. При ошибке увеличивается счётчик ошибок; после 5 ошибок — `is_failed = true`
-5. **DLQ Consumer Worker** слушает dead-letter очередь и выполняет повторные попытки (до 3 раз с задержками 5/10/15 с)
-6. После исчерпания попыток сообщение сохраняется в таблицу `dlq_messages`
-
 ### Модели данных
 
 **Task**
