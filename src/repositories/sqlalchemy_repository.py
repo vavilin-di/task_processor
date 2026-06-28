@@ -1,6 +1,6 @@
 import operator
 from itertools import chain
-from typing import Any, Protocol, Tuple
+from typing import Any, ClassVar, Protocol
 
 from sqlakeyset.asyncio import select_page
 from sqlalchemy import ColumnElement, Select, and_, delete, select, update
@@ -10,7 +10,7 @@ from sqlalchemy.sql.functions import GenericFunction
 
 
 class IIdentifiable(Protocol):
-    id: Mapped[int]
+    id: ClassVar[Mapped[int]]
 
 
 _FILTER_OPERATORS: tuple[tuple[str, Any], ...] = (("_from", operator.ge), ("_to", operator.le))
@@ -21,7 +21,7 @@ class SQLAlchemyRepository[ModelT: IIdentifiable]:
         self._model = model
         self._session = session
 
-    async def create(self, **kwargs: dict[str, Any]) -> ModelT:
+    async def create(self, **kwargs: Any) -> ModelT:
         object_from_db = self._model(**kwargs)
         self._session.add(object_from_db)
         await self._session.flush()
@@ -67,7 +67,7 @@ class SQLAlchemyRepository[ModelT: IIdentifiable]:
         await self._session.execute(update_statement)
 
     def _get_base_record_filter(self, record_id: int) -> ColumnElement[bool]:
-        return operator.eq(self._model.id, record_id)
+        return and_(self._model.id == record_id)
 
     def _get_base_get_all_select_statement(self) -> Select[tuple[ModelT]]:
         return select(self._model).order_by(self._model.id)

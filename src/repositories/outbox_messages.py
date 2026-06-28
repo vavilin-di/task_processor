@@ -1,5 +1,5 @@
-from collections.abc import AsyncGenerator
-from typing import Any, Iterable
+from collections.abc import AsyncGenerator, Iterable
+from typing import Any
 
 from sqlalchemy import func, not_, select, update
 

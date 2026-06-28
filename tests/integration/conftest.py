@@ -42,7 +42,7 @@ class TestBrokerProvider(Provider):
 
     @provide(scope=Scope.APP)
     def get_broker(self) -> RabbitBroker:
-        return AsyncMock(spec=RabbitBroker)  # type: ignore[return-value]
+        return AsyncMock(spec=RabbitBroker)
 
 
 @pytest_asyncio.fixture(scope="function")

@@ -2,10 +2,10 @@ __all__ = ["get_dlq_consumer_worker"]
 
 import asyncio
 import logging
+from typing import TYPE_CHECKING, Any
 
 from dishka import AsyncContainer
 from faststream.rabbit import RabbitBroker
-from faststream.rabbit.subscriber import RabbitSubscriber
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.messaging.queues import ROUTING_KEY_PROCESS, TASKS_DLQ_QUEUE, get_retry_queue
@@ -13,6 +13,11 @@ from src.repositories.dlq_messages import DLQMessageRepository
 from src.schemas.dlq_messages import DLQMessage, DLQMessageCreate
 
 from ..utilities import use_broker
+
+if TYPE_CHECKING:
+    from collections.abc import Coroutine
+
+    from faststream._internal.endpoint.call_wrapper import HandlerCallWrapper
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +32,7 @@ class DLQConsumerWorker:
     def __init__(self, broker: RabbitBroker, container: AsyncContainer) -> None:
         self._broker = broker
         self._container = container
-        self._subscriber = None
+        self._subscriber: HandlerCallWrapper[[dict[Any, Any]], Coroutine[Any, Any, None]] | None = None
 
     async def run(self) -> None:
         async with use_broker(self._broker, logger):

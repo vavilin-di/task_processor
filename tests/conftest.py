@@ -120,6 +120,6 @@ async def container() -> AsyncGenerator[AsyncContainer, None]:
     await container.close()
 
 
-def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:  # noqa: ARG001
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:
     """Останавливает Docker-контейнер после завершения тестовой сессии."""
     SharedPostgresContainer.stop()

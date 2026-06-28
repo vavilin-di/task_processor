@@ -1,4 +1,3 @@
-import pytest
 from pydantic import SecretStr
 
 from src.settings.postgres import PostgresSettings

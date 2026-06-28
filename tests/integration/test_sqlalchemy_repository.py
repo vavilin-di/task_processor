@@ -11,7 +11,7 @@ from src.repositories.sqlalchemy_repository import SQLAlchemyRepository
 
 @pytest.fixture
 def repo(session: AsyncSession) -> SQLAlchemyRepository[Task]:
-    return SQLAlchemyRepository(Task, session)  # type: ignore[type-var]
+    return SQLAlchemyRepository(Task, session)
 
 
 def _task_kwargs(**overrides: Any) -> dict[str, Any]:
@@ -50,7 +50,7 @@ class TestSQLAlchemyRepository:
         for i in range(5):
             await repo.create(**_task_kwargs(name=f"Task {i}", description=f"Desc {i}"))
 
-        items, cursor, has_next = await repo.get_all(cursor=None, limit=3, filters=None)
+        items, cursor, _ = await repo.get_all(cursor=None, limit=3, filters=None)
         assert len(items) == 3  # noqa: S101, PLR2004
         assert cursor is not None  # noqa: S101
 

@@ -62,34 +62,34 @@ class TestOutboxMessageRepository:
     async def test_mark_messages_as_published(self, outbox_repo: OutboxMessageRepository) -> None:
         mock_session = outbox_repo._session
         await outbox_repo.mark_messages_as_published(message_ids=[1, 2])
-        mock_session.execute.assert_awaited_once()
+        mock_session.execute.assert_awaited_once()  # type: ignore[attr-defined]
 
     async def test_add_error_below_threshold(self, outbox_repo: OutboxMessageRepository) -> None:
         mock_session = outbox_repo._session
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = ["previous error"]
-        mock_session.execute.return_value = mock_result
+        mock_session.execute.return_value = mock_result  # type: ignore[attr-defined]
 
         await outbox_repo.add_error(task_id=1, error="Some error")
 
-        assert mock_session.execute.await_count == 1  # noqa: S101, PLR2004
+        assert mock_session.execute.await_count == 1  # type: ignore[attr-defined] # noqa: S101
 
     async def test_add_error_exceeds_threshold_marks_failed(self, outbox_repo: OutboxMessageRepository) -> None:
         mock_session = outbox_repo._session
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = list(range(MAX_PUBLISH_ERRORS_COUNT))
-        mock_session.execute.side_effect = [mock_result, mock_result]
+        mock_session.execute.side_effect = [mock_result, mock_result]  # type: ignore[attr-defined]
 
         await outbox_repo.add_error(task_id=1, error="Fatal error")
 
         # Должно быть два execute: update с returning + update is_failed=True
-        assert mock_session.execute.await_count == 2  # noqa: S101, PLR2004
+        assert mock_session.execute.await_count == 2  # type: ignore[attr-defined] # noqa: S101, PLR2004
 
     async def test_add_error_raises_on_none_errors_count(self, outbox_repo: OutboxMessageRepository) -> None:
         mock_session = outbox_repo._session
         mock_result = MagicMock()
         mock_result.scalar_one_or_none.return_value = None
-        mock_session.execute.return_value = mock_result
+        mock_session.execute.return_value = mock_result  # type: ignore[attr-defined]
 
         with pytest.raises(AssertionError, match="OutboxMessage с id=1 не найдено"):
             await outbox_repo.add_error(task_id=1, error="Error")

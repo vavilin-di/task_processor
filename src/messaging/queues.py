@@ -33,7 +33,7 @@ TASKS_DLQ_QUEUE = RabbitQueue(name="task_processing_dlq", routing_key=ROUTING_KE
 
 def get_retry_queue(delay_ms: float) -> RabbitQueue:
     """Создаёт временную очередь для retry с указанной задержкой"""
-    return RabbitQueue(
+    return RabbitQueue(  # type: ignore[no-any-return, call-overload]
         name=f"{DLQ_RECOVER_QUEUE_PREFIX}_{uuid4().hex}",
         durable=False,
         arguments={

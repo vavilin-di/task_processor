@@ -41,7 +41,7 @@ def mock_repo() -> MagicMock:
 
 @pytest.fixture
 def service(mock_session: MagicMock, mock_broker: AsyncMock, mock_repo: MagicMock) -> OutboxMessageService:
-    return OutboxMessageService(outbox_messages_repository=mock_repo, broker=mock_broker, session=mock_session)  # type: ignore[arg-type]
+    return OutboxMessageService(outbox_messages_repository=mock_repo, broker=mock_broker, session=mock_session)
 
 
 class TestOutboxMessageService:

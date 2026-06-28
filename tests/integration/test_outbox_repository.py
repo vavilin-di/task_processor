@@ -84,7 +84,7 @@ class TestOutboxMessageRepository:
             await repo.add_error(task_id=msg1.id, error=f"Error {i}")
 
         messages = await _collect_messages(repo)
-        assert len(messages) == 1  # noqa: S101, PLR2004
+        assert len(messages) == 1  # noqa: S101
 
     async def test_mark_messages_as_published(
         self, repo: OutboxMessageRepository, task_repo: SQLAlchemyRepository[Task], session: AsyncSession

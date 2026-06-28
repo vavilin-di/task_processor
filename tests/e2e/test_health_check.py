@@ -1,3 +1,5 @@
+from http import HTTPStatus
+
 import pytest
 from httpx import AsyncClient
 
@@ -9,4 +11,4 @@ class TestHealthCheck:
     async def test_health_check(self, client: AsyncClient) -> None:
         """Проверка, что приложение отвечает на HTTP-запрос."""
         response = await client.get("/tasks")
-        assert response.status_code == 200  # noqa: S101
+        assert response.status_code == HTTPStatus.OK  # noqa: S101
