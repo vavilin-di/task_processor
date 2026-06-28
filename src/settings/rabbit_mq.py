@@ -13,8 +13,8 @@ class RabbitMQSettings(BaseSettings):
     PASSWORD: SecretStr
     VIRTUAL_HOST: str
 
-    PREFETCH_COUNT: int
-    HEARTBEAT: int
+    PREFETCH_COUNT: int = 10
+    HEARTBEAT: int = 60
 
     DATABASE_URL: str = ""
 

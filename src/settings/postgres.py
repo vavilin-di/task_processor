@@ -15,10 +15,10 @@ class PostgresSettings(BaseSettings):
     PASSWORD: SecretStr
     DATABASE: str
 
-    POOL_SIZE: int
-    MAX_OVERFLOW: int
-    POOL_TIMEOUT: int
-    POOL_RECYCLE: int
+    POOL_SIZE: int = 10
+    MAX_OVERFLOW: int = 20
+    POOL_TIMEOUT: int = 30
+    POOL_RECYCLE: int = 1800
 
     DATABASE_URL: str = ""
 
