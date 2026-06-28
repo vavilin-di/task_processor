@@ -21,11 +21,13 @@ dependencies = [
 [dependency-groups]
 dev = [
     "black>=26.5.1",
+    "coverage>=7.14.3",
     "debugpy>=1.8.21",
     "httpx>=0.28.1",
     "mypy>=2.1.0",
     "pytest>=9.1.0",
     "pytest-asyncio>=1.4.0",
+    "pytest-cov>=7.1.0",
     "pytest-mock>=3.15.1",
     "ruff>=0.15.16",
     "testcontainers>=4.14.2",

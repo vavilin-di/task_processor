@@ -125,7 +125,6 @@ jobs:
 
       - name: Combine coverage
         run: |
-          pip install coverage
           coverage combine coverage-unit.xml coverage-integration.xml
           coverage xml -o coverage.xml
 
