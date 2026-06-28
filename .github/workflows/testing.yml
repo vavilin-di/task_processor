@@ -165,20 +165,20 @@ jobs:
       - name: Install dependencies
         run: uv sync
 
-      - name: Download coverage artifacts
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          RUN_ID="${{ github.run_id }}"
-          REPO="${{ github.repository }}"
+      - name: Download unit coverage
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-unit
 
-          for ARTIFACT_NAME in coverage-unit coverage-integration coverage-e2e; do
-            echo "Downloading $ARTIFACT_NAME from run $RUN_ID..."
-            gh run download "$RUN_ID" \
-              --repo "$REPO" \
-              --name "$ARTIFACT_NAME" \
-              --dir .
-          done
+      - name: Download integration coverage
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-integration
+
+      - name: Download E2E coverage
+        uses: actions/download-artifact@v8
+        with:
+          name: coverage-e2e
 
       - name: Combine coverage data and generate XML report
         run: |
