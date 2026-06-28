@@ -9,7 +9,7 @@ RUN uv sync --no-dev --frozen
 FROM python:3.12-slim-bookworm AS runtime
 
 WORKDIR /app
-COPY --from=builder /uv /uvx /bin/
+COPY --from=builder /usr/local/bin/uv /usr/local/bin/uvx /usr/local/bin/
 COPY --from=builder /app/.venv /app/.venv
 
 COPY src/ ./src/
