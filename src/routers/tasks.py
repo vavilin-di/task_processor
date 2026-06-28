@@ -26,7 +26,7 @@ async def create_task(service: FromDishka[TaskService], task: TaskCreate) -> Tas
     return await service.create_task(task)
 
 
-@tasks_router.get("", response_model=PaginatedResponse[TaskSchema], status_code=status.HTTP_200_OK)
+@tasks_router.get("", status_code=status.HTTP_200_OK)
 @inject
 async def get_tasks(
     service: FromDishka[TaskService],
