@@ -19,7 +19,7 @@ async def use_broker(broker: RabbitBroker, logger: Logger) -> AsyncGenerator[Non
         exception_type = ex
         raise
     except Exception as ex:
-        logger.error(f"Во время работы брокера {broker_repr} произошла ошибка: {ex}")
+        logger.exception(f"Во время работы брокера {broker_repr} произошла ошибка: {ex}", exc_info=ex)
         exception_type = ex
         raise
     finally:

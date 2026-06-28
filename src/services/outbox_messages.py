@@ -27,7 +27,9 @@ class OutboxMessageService:
                     await self._broker.publish(payload, TASKS_QUEUE, routing_key=routing_key)
                     published_message_ids.append(task_id)
                 except Exception as ex:
-                    logger.error(f"Произошла ошибка при публикации задачи с id {task_id} в брокере: {ex}")
+                    logger.exception(
+                        f"Произошла ошибка при публикации задачи с id {task_id} в брокере: {ex}", exc_info=ex
+                    )
                     await self._outbox_messages_repository.add_error(task_id, str(ex))
 
             if len(published_message_ids) > 0:
