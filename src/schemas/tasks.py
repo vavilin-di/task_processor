@@ -25,9 +25,9 @@ class Task(BaseModel):
     priority: TaskPriority
     status: TaskStatus
     created_at: datetime
-    started_at: datetime
+    started_at: datetime | None
     finished_at: datetime | None
-    result: dict
+    result: dict[str, Any] | None
     errors: list[str] | None
     is_active: bool = True
 
