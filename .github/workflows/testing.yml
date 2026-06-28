@@ -169,16 +169,25 @@ jobs:
         uses: actions/download-artifact@v8
         with:
           name: coverage-unit
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
 
       - name: Download integration coverage
         uses: actions/download-artifact@v8
         with:
           name: coverage-integration
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
 
       - name: Download E2E coverage
         uses: actions/download-artifact@v8
         with:
           name: coverage-e2e
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          repository: ${{ github.repository }}
+          run-id: ${{ github.run_id }}
 
       - name: Combine coverage data and generate XML report
         run: |
