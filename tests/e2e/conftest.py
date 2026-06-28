@@ -7,24 +7,34 @@ from dishka.integrations.fastapi import setup_dishka
 from fastapi import APIRouter, FastAPI
 from faststream.rabbit import RabbitBroker
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession
 
-from src.database.models.base import Base
-from src.di import DatabaseProvider, RepositoryProvider, ServiceProvider, SettingsProvider
+from src.di import RepositoryProvider, ServiceProvider, SettingsProvider
 from src.routers import tasks_router
 from src.settings import get_settings
 
 
 class TestE2ESessionProvider(Provider):
-    """Провайдер, переопределяющий сессию на SQLite in-memory для e2e-тестов."""
+    """Провайдер, создающий свежую сессию на каждый запрос из общего engine."""
 
-    def __init__(self, session: AsyncSession) -> None:
+    def __init__(self, engine: AsyncEngine) -> None:
         super().__init__()
-        self._session = session
+        self._engine = engine
 
     @provide(scope=Scope.REQUEST)
-    async def get_session(self) -> AsyncSession:
-        return self._session
+    async def get_session(self) -> AsyncGenerator[AsyncSession, None]:
+        """Создаёт новую сессию с отдельным соединением.
+
+        Транзакция управляется через session.begin() в сервисах.
+        После завершения запроса соединение автоматически закрывается.
+        """
+        connection = await self._engine.connect()
+        session = AsyncSession(bind=connection, expire_on_commit=False)
+        try:
+            yield session
+        finally:
+            await session.close()
+            await connection.close()
 
 
 class TestE2EBrokerProvider(Provider):
@@ -35,41 +45,17 @@ class TestE2EBrokerProvider(Provider):
         return AsyncMock(spec=RabbitBroker)  # type: ignore[return-value]
 
 
-@pytest_asyncio.fixture(scope="session")
-async def e2e_engine() -> AsyncGenerator[AsyncEngine, None]:
-    """In-memory SQLite engine для e2e-тестов (создание таблиц один раз на сессию)."""
-    engine = create_async_engine("sqlite+aiosqlite://", echo=False)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield engine
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-    await engine.dispose()
-
-
 @pytest_asyncio.fixture(scope="function")
-async def e2e_session(e2e_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
-    """Свежая транзакция на каждый e2e-тест с откатом после завершения."""
-    connection = await e2e_engine.connect()
-    transaction = await connection.begin()
-    session = AsyncSession(bind=connection, expire_on_commit=False)
+async def e2e_di_container(pg_engine: AsyncEngine) -> AsyncContainer:
+    """DI-контейнер с PostgreSQL сессией для e2e-тестов.
 
-    yield session
-
-    await session.close()
-    await transaction.rollback()
-    await connection.close()
-
-
-@pytest_asyncio.fixture(scope="function")
-async def e2e_di_container(e2e_session: AsyncSession) -> AsyncContainer:
-    """DI-контейнер с SQLite in-memory сессией для e2e-тестов."""
+    Использует общий pg_engine из корневого conftest.py (SharedPostgresContainer).
+    """
     return make_async_container(
         SettingsProvider(),
-        DatabaseProvider(),
         RepositoryProvider(),
         ServiceProvider(),
-        TestE2ESessionProvider(e2e_session),
+        TestE2ESessionProvider(pg_engine),
         TestE2EBrokerProvider(),
     )
 

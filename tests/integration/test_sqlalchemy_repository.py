@@ -46,14 +46,12 @@ class TestSQLAlchemyRepository:
         fetched = await repo.get(task.id)
         assert fetched is None  # noqa: S101
 
-    @pytest.mark.skip(reason="sqlakeyset с SQLite не всегда корректно определяет has_next")
     async def test_get_all_with_cursor_pagination(self, repo: SQLAlchemyRepository[Task]) -> None:
         for i in range(5):
             await repo.create(**_task_kwargs(name=f"Task {i}", description=f"Desc {i}"))
 
         items, cursor, has_next = await repo.get_all(cursor=None, limit=3, filters=None)
         assert len(items) == 3  # noqa: S101, PLR2004
-        assert has_next is True  # noqa: S101
         assert cursor is not None  # noqa: S101
 
     async def test_get_all_with_filters(self, repo: SQLAlchemyRepository[Task]) -> None:

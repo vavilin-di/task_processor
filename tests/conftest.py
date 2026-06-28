@@ -1,53 +1,93 @@
-import asyncio
-from asyncio.events import AbstractEventLoop
-from collections.abc import AsyncGenerator, AsyncIterable, Generator
-from typing import Any
+from collections.abc import AsyncGenerator
 
 import pytest
 import pytest_asyncio
-from dishka import AsyncContainer, Provider, Scope, make_async_container, provide
+from dishka import AsyncContainer, make_async_container
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, create_async_engine
+from testcontainers.postgres import PostgresContainer
 
 from src.database.models.base import Base
-from src.di import DatabaseProvider, RepositoryProvider, SettingsProvider
+from src.di import RepositoryProvider, SettingsProvider
 
 
-class TestSessionProvider(Provider):
-    """Провайдер, переопределяющий сессию на тестовую (SQLite in-memory)."""
+class SharedPostgresContainer:
+    """Singleton-обёртка для PostgreSQL testcontainer.
 
-    def __init__(self, session: AsyncSession) -> None:
-        super().__init__()
-        self._session = session
+    Позволяет использовать один контейнер для всех тестов (integration + e2e),
+    избегая конфликта портов при запуске нескольких контейнеров.
 
-    @provide(scope=Scope.REQUEST)
-    async def get_session(self) -> AsyncIterable[AsyncSession]:
-        yield self._session
+    Контейнер (Docker) запускается один раз на сессию.
+    URL базы данных сохраняется, но engine создаётся per-function,
+    чтобы избежать привязки пула соединений к конкретному event loop.
+    """
+
+    _container: PostgresContainer | None = None
+    _database_url: str | None = None
+
+    @classmethod
+    def get_url(cls) -> str:
+        """Возвращает URL подключения к БД.
+
+        Если контейнер ещё не запущен — запускает его.
+        """
+        if cls._database_url is not None:
+            return cls._database_url
+
+        cls._container = PostgresContainer("postgres:14.5")
+        cls._container.start()
+
+        cls._database_url = cls._container.get_connection_url().replace("postgresql+psycopg2", "postgresql+asyncpg")
+        return cls._database_url
+
+    @classmethod
+    async def create_tables(cls) -> None:
+        """Создаёт схему БД через временный engine."""
+        engine = create_async_engine(cls.get_url(), echo=False)
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.create_all)
+        await engine.dispose()
+
+    @classmethod
+    async def drop_tables(cls) -> None:
+        """Удаляет схему БД через временный engine."""
+        engine = create_async_engine(cls.get_url(), echo=False)
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+        await engine.dispose()
+
+    @classmethod
+    def stop(cls) -> None:
+        """Останавливает Docker-контейнер."""
+        if cls._container is not None:
+            cls._container.stop()
+            cls._container = None
+            cls._database_url = None
 
 
-@pytest.fixture(scope="session")
-def event_loop() -> Generator[AbstractEventLoop, Any, None]:
-    """Один event_loop на сессию для всех async-тестов."""
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
+@pytest_asyncio.fixture(scope="function")
+async def pg_engine() -> AsyncGenerator[AsyncEngine, None]:
+    """PostgreSQL engine из общего testcontainer.
 
+    Engine создаётся per-function, чтобы избежать привязки пула соединений
+    к конкретному event loop. Контейнер (Docker) запускается один раз.
+    """
+    # Запускаем контейнер при первом вызове
+    url = SharedPostgresContainer.get_url()
 
-@pytest_asyncio.fixture(scope="session")
-async def engine() -> AsyncGenerator[AsyncEngine, None]:
-    """In-memory SQLite engine для тестов (создание таблиц один раз на сессию)."""
-    engine = create_async_engine("sqlite+aiosqlite://", echo=False)
+    # Создаём таблицы при первом вызове
+    engine = create_async_engine(url, echo=False)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+
     yield engine
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
+
     await engine.dispose()
 
 
 @pytest_asyncio.fixture(scope="function")
-async def session(engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
+async def pg_session(pg_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
     """Свежая транзакция на каждый тест с откатом после завершения."""
-    connection = await engine.connect()
+    connection = await pg_engine.connect()
     transaction = await connection.begin()
     session = AsyncSession(bind=connection, expire_on_commit=False)
 
@@ -59,13 +99,21 @@ async def session(engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
 
 
 @pytest_asyncio.fixture(scope="function")
-async def container(session: AsyncSession) -> AsyncGenerator[AsyncContainer, None]:
-    """DI-контейнер с переопределённой сессией (SQLite in-memory)."""
+async def container() -> AsyncGenerator[AsyncContainer, None]:
+    """DI-контейнер без DatabaseProvider (только настройки и репозитории).
+
+    DatabaseProvider исключён, т.к. он создаёт реальное подключение к PostgreSQL
+    через asyncpg. Unit-тесты используют моки, а integration/e2e тесты
+    имеют свои conftest с testcontainer.
+    """
     container = make_async_container(
         SettingsProvider(),
-        DatabaseProvider(),
         RepositoryProvider(),
-        TestSessionProvider(session),
     )
     yield container
     await container.close()
+
+
+def pytest_sessionfinish(session: pytest.Session, exitstatus: int) -> None:  # noqa: ARG001
+    """Останавливает Docker-контейнер после завершения тестовой сессии."""
+    SharedPostgresContainer.stop()

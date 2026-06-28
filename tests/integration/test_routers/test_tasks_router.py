@@ -19,7 +19,6 @@ def _create_task_payload(**overrides: object) -> dict[str, object]:
 class TestTasksRouter:
     """Integration-тесты для маршрутов CRUD задач."""
 
-    @pytest.mark.skip(reason="OutboxMessage является MappedAsDataclass и требует все поля при создании")
     async def test_create_task(self, client: AsyncClient) -> None:
         payload = _create_task_payload()
         response = await client.post("/tasks", json=payload)
@@ -35,7 +34,6 @@ class TestTasksRouter:
         assert response.status_code == status_codes.HTTP_404_NOT_FOUND  # noqa: S101
         assert response.json()["detail"] == "Задача не найдена"  # noqa: S101
 
-    @pytest.mark.skip(reason="OutboxMessage является MappedAsDataclass и требует все поля при создании")
     async def test_get_task_by_id(self, client: AsyncClient) -> None:
         create_resp = await client.post("/tasks", json=_create_task_payload())
         task_id = create_resp.json()["id"]
@@ -44,7 +42,6 @@ class TestTasksRouter:
         assert response.status_code == status_codes.HTTP_200_OK  # noqa: S101
         assert response.json()["id"] == task_id  # noqa: S101
 
-    @pytest.mark.skip(reason="OutboxMessage является MappedAsDataclass и требует все поля при создании")
     async def test_get_tasks_pagination(self, client: AsyncClient) -> None:
         for i in range(3):
             await client.post("/tasks", json=_create_task_payload(name=f"Task {i}"))
@@ -56,7 +53,6 @@ class TestTasksRouter:
         assert "next_cursor" in data  # noqa: S101
         assert "has_next" in data  # noqa: S101
 
-    @pytest.mark.skip(reason="OutboxMessage является MappedAsDataclass и требует все поля при создании")
     async def test_cancel_task(self, client: AsyncClient) -> None:
         create_resp = await client.post("/tasks", json=_create_task_payload(name="To cancel"))
         task_id = create_resp.json()["id"]
@@ -69,7 +65,6 @@ class TestTasksRouter:
         response = await client.delete("/tasks/1234")
         assert response.status_code == status_codes.HTTP_404_NOT_FOUND  # noqa: S101
 
-    @pytest.mark.skip(reason="OutboxMessage является MappedAsDataclass и требует все поля при создании")
     async def test_get_task_status(self, client: AsyncClient) -> None:
         create_resp = await client.post("/tasks", json=_create_task_payload(name="Status check"))
         task_id = create_resp.json()["id"]

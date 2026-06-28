@@ -1,15 +1,15 @@
-from unittest.mock import AsyncMock, MagicMock, PropertyMock, patch
+from typing import Any
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
+from src.database.models.outbox_messages import OutboxMessage
 from src.repositories.outbox_messages import MAX_PUBLISH_ERRORS_COUNT, OutboxMessageRepository
 
 
 @pytest.fixture
 def mock_session() -> AsyncMock:
-    session = AsyncMock()
-    session.execute = AsyncMock()
-    return session
+    return AsyncMock()
 
 
 @pytest.fixture
@@ -17,37 +17,46 @@ def outbox_repo(mock_session: AsyncMock) -> OutboxMessageRepository:
     with patch("src.repositories.outbox_messages.SQLAlchemyRepository.__init__", return_value=None):
         repo = OutboxMessageRepository.__new__(OutboxMessageRepository)
         repo._session = mock_session
-        repo._model = MagicMock()
-        repo._model.id = PropertyMock()
-        repo._model.routing_key = PropertyMock()
-        repo._model.is_published = PropertyMock()
-        repo._model.is_failed = PropertyMock()
-        repo._model.created_at = PropertyMock()
+        repo._model = OutboxMessage
         return repo
 
 
 class TestOutboxMessageRepository:
     """Unit-тесты для OutboxMessageRepository с замокированным SQLAlchemyRepository."""
 
+    async def _collect_from_stream(
+        self, outbox_repo: OutboxMessageRepository, limit: int = 10
+    ) -> list[tuple[int, str, dict[str, Any]]]:
+        """Собирает результаты из асинхронного генератора."""
+        return [item async for item in outbox_repo.get_not_published_outbox_messages(limit=limit)]
+
     async def test_get_not_published_outbox_messages(
         self, outbox_repo: OutboxMessageRepository, mock_session: AsyncMock
     ) -> None:
-        mock_result = MagicMock()
-        mock_result.t.all.return_value = [(1, "task.created", {"key": "value"}), (2, "task.updated", {})]
-        mock_session.execute.return_value = mock_result
+        # Настраиваем stream() чтобы он возвращал асинхронный итератор
+        mock_stream = AsyncMock()
+        mock_stream.__aenter__.return_value = mock_stream
+        mock_stream.__aiter__.return_value = iter(
+            [
+                MagicMock(tuple=lambda: (1, "task.created", {"key": "value"})),
+                MagicMock(tuple=lambda: (2, "task.updated", {})),
+            ]
+        )
+        mock_session.stream.return_value = mock_stream
 
-        result = await outbox_repo.get_not_published_outbox_messages(limit=10)
+        result = await self._collect_from_stream(outbox_repo)
         assert result == [(1, "task.created", {"key": "value"}), (2, "task.updated", {})]  # noqa: S101
-        mock_session.execute.assert_awaited_once()
+        mock_session.stream.assert_awaited_once()
 
     async def test_get_not_published_outbox_messages_empty(
         self, outbox_repo: OutboxMessageRepository, mock_session: AsyncMock
     ) -> None:
-        mock_result = MagicMock()
-        mock_result.t.all.return_value = []
-        mock_session.execute.return_value = mock_result
+        mock_stream = AsyncMock()
+        mock_stream.__aenter__.return_value = mock_stream
+        mock_stream.__aiter__.return_value = iter([])
+        mock_session.stream.return_value = mock_stream
 
-        result = await outbox_repo.get_not_published_outbox_messages(limit=10)
+        result = await self._collect_from_stream(outbox_repo)
         assert result == []  # noqa: S101
 
     async def test_mark_messages_as_published(self, outbox_repo: OutboxMessageRepository) -> None:
