@@ -735,7 +735,7 @@ jobs:
       - name: Run unit tests with coverage
         run: uv run pytest -v -m unit --cov=src --cov-report=xml:coverage-unit.xml
       - name: Upload unit coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-unit
           path: coverage-unit.xml
@@ -771,7 +771,7 @@ jobs:
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
       - name: Upload integration coverage
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: coverage-integration
           path: coverage-integration.xml
