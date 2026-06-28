@@ -70,7 +70,7 @@ class SQLAlchemyRepository[ModelT: IIdentifiable]:
         return operator.eq(self._model.id, record_id)
 
     def _get_base_get_all_select_statement(self) -> Select[tuple[ModelT]]:
-        return select(self._model)
+        return select(self._model).order_by(self._model.id)
 
     def _get_filtered_statement(
         self, select_statement: Select[tuple[ModelT]], filters: dict[str, Any]
