@@ -34,7 +34,7 @@ jobs:
           uv run pytest -v -m unit --cov=src --cov-report= --tb=long
           echo "::endgroup::"
         env:
-          COVERAGE_FILE: .coverage.unit
+          COVERAGE_FILE: coverage.unit
 
       - name: List files for debug
         run: ls -la
@@ -43,7 +43,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-unit
-          path: .coverage.unit
+          path: coverage.unit
 
   integration-tests:
     runs-on: ubuntu-latest
@@ -79,7 +79,7 @@ jobs:
           uv run pytest -v -m integration --cov=src --cov-report= --tb=long
           echo "::endgroup::"
         env:
-          COVERAGE_FILE: .coverage.integration
+          COVERAGE_FILE: coverage.integration
           POSTGRES_DB: ${{ env.POSTGRES_DATABASE }}
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
@@ -88,7 +88,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-integration
-          path: .coverage.integration
+          path: coverage.integration
 
       - name: Upload test logs on failure
         if: failure()
@@ -133,7 +133,7 @@ jobs:
           uv run pytest -v -m e2e --cov=src --cov-report= --tb=long
           echo "::endgroup::"
         env:
-          COVERAGE_FILE: .coverage.e2e
+          COVERAGE_FILE: coverage.e2e
           POSTGRES_DB: ${{ env.POSTGRES_DATABASE }}
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
@@ -142,7 +142,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: coverage-e2e
-          path: .coverage.e2e
+          path: coverage.e2e
 
       - name: Upload test logs on failure
         if: failure()
@@ -171,6 +171,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage-unit
+          path: coverage.unit
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           run-id: ${{ github.run_id }}
@@ -179,6 +180,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage-integration
+          path: coverage.integration
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           run-id: ${{ github.run_id }}
@@ -187,13 +189,14 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage-e2e
+          path: coverage.e2e
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           run-id: ${{ github.run_id }}
 
       - name: Combine coverage data and generate XML report
         run: |
-          uv run coverage combine .coverage.unit .coverage.integration .coverage.e2e
+          uv run coverage combine coverage.unit coverage.integration coverage.e2e
           uv run coverage xml -o coverage.xml
 
       - name: Upload coverage report
