@@ -168,7 +168,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage-unit
-          path: coverage.unit
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           run-id: ${{ github.run_id }}
@@ -177,7 +176,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage-integration
-          path: coverage.integration
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           run-id: ${{ github.run_id }}
@@ -186,7 +184,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: coverage-e2e
-          path: coverage.e2e
           github-token: ${{ secrets.GITHUB_TOKEN }}
           repository: ${{ github.repository }}
           run-id: ${{ github.run_id }}
