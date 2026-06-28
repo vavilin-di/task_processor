@@ -196,7 +196,7 @@ jobs:
           mv coverage.unit  .coverage.unit 
           mv coverage.integration .coverage.integration
           mv coverage.e2e .coverage.e2e
-          ls -la .coverage*
+          ls -la .
           uv run coverage combine
           uv run coverage xml -o coverage.xml
 
