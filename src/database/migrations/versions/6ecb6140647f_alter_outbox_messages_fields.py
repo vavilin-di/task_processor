@@ -27,6 +27,7 @@ def upgrade() -> None:
             existing_type=postgresql.JSON(astext_type=sa.Text()),
             type_=sa.ARRAY(sa.String()),
             existing_nullable=False,
+            postgresql_using="ARRAY[errors::text]",
         )
 
 
