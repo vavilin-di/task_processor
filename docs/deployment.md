@@ -70,15 +70,18 @@ cp .env.example .env
 
 ### 2.2. Запуск
 
+> **Важно:** Файл `docker-compose.yml` находится в директории `infrastructure/`, а файл `.env` — в корне проекта.
+> При запуске необходимо указывать путь к `.env` через флаг `--env-file`, иначе переменные окружения не будут подставлены.
+
 ```bash
-docker compose -f infrastructure/docker-compose.yml up -d
+docker compose -f infrastructure/docker-compose.yml --env-file .env up -d
 ```
 
 **Порядок запуска сервисов:**
 
 1. **postgres** — запуск СУБД, ожидание готовности через `pg_isready`
 2. **rabbitmq** — запуск брокера, ожидание готовности через `rabbitmq-diagnostics check_port_connectivity`
-3. **migration** — применение миграций Alembic (завершается после выполнения)
+3. **migration** — применение миграций Alembic. Это **однократная задача**: контейнер запускается, применяет миграции и завершается со статусом `Exited (0)`. Это **нормальное поведение**, не ошибка.
 4. **app** — FastAPI-приложение (зависит от migration и rabbitmq)
 5. **outbox-publish-worker** — воркер публикации outbox-сообщений (зависит от migration и rabbitmq)
 6. **dlq-consumer-worker** — воркер обработки DLQ-сообщений (зависит от migration и rabbitmq)
@@ -104,7 +107,7 @@ docker compose -f infrastructure/docker-compose.yml up -d
 **Статус контейнеров:**
 
 ```bash
-docker compose -f infrastructure/docker-compose.yml ps
+docker compose -f infrastructure/docker-compose.yml --env-file .env ps
 ```
 
 **Health check приложения:**
@@ -118,13 +121,13 @@ curl http://localhost:8000/api/v1/tasks
 **Логи приложения:**
 
 ```bash
-docker compose -f infrastructure/docker-compose.yml logs -f app
+docker compose -f infrastructure/docker-compose.yml --env-file .env logs -f app
 ```
 
 **Логи любого сервиса:**
 
 ```bash
-docker compose -f infrastructure/docker-compose.yml logs -f <service_name>
+docker compose -f infrastructure/docker-compose.yml --env-file .env logs -f <service_name>
 ```
 
 ### 2.5. Остановка
@@ -132,13 +135,13 @@ docker compose -f infrastructure/docker-compose.yml logs -f <service_name>
 **Остановка сервисов (тома сохраняются):**
 
 ```bash
-docker compose -f infrastructure/docker-compose.yml down
+docker compose -f infrastructure/docker-compose.yml --env-file .env down
 ```
 
 **Полная остановка с удалением томов (БД и данные RabbitMQ будут стёрты):**
 
 ```bash
-docker compose -f infrastructure/docker-compose.yml down -v
+docker compose -f infrastructure/docker-compose.yml --env-file .env down -v
 ```
 
 ---
