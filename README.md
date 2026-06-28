@@ -1,5 +1,8 @@
 # async-task-manager
 
+### SonarQuality:
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=vavilin-di_task_processor&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=vavilin-di_task_processor)
+
 **Асинхронный сервис управления задачами** на базе FastAPI, RabbitMQ и PostgreSQL с реализацией паттерна **Transactional Outbox** для гарантированной доставки сообщений.
 
 Версия: **0.1.0** · Python **3.12**
