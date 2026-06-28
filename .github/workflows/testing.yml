@@ -36,9 +36,6 @@ jobs:
         env:
           COVERAGE_FILE: coverage.unit
 
-      - name: List files for debug
-        run: ls -la
-
       - name: Upload unit coverage
         uses: actions/upload-artifact@v4
         with:
@@ -196,6 +193,9 @@ jobs:
 
       - name: Combine coverage data and generate XML report
         run: |
+          mv coverage.unit  .coverage.unit 
+          mv coverage.integration .coverage.integration
+          mv coverage.e2e .coverage.e2e
           uv run coverage combine coverage.unit coverage.integration coverage.e2e
           uv run coverage xml -o coverage.xml
 
