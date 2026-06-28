@@ -1,4 +1,5 @@
 from collections.abc import AsyncGenerator
+from os import getenv
 
 import pytest
 import pytest_asyncio
@@ -8,6 +9,7 @@ from testcontainers.postgres import PostgresContainer
 
 from src.database.models.base import Base
 from src.di import RepositoryProvider, SettingsProvider
+from src.settings.postgres import PostgresSettings
 
 
 class SharedPostgresContainer:
@@ -33,9 +35,13 @@ class SharedPostgresContainer:
         if cls._database_url is not None:
             return cls._database_url
 
+        if getenv("CI"):
+            settings = PostgresSettings()
+            cls._database_url = settings.DATABASE_URL
+            return cls._database_url
+
         cls._container = PostgresContainer("postgres:14.5")
         cls._container.start()
-
         cls._database_url = cls._container.get_connection_url().replace("postgresql+psycopg2", "postgresql+asyncpg")
         return cls._database_url
 
@@ -61,7 +67,7 @@ class SharedPostgresContainer:
         if cls._container is not None:
             cls._container.stop()
             cls._container = None
-            cls._database_url = None
+        cls._database_url = None
 
 
 @pytest_asyncio.fixture(scope="function")
