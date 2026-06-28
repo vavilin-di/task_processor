@@ -10,7 +10,6 @@ env:
   POSTGRES_USER: test_user
   POSTGRES_PASSWORD: test_pass
 
-
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
@@ -26,7 +25,10 @@ jobs:
         run: uv sync
 
       - name: Run unit tests with coverage
-        run: uv run pytest -v -m unit --cov=src --cov-report=
+        run: |
+          echo "::group::Unit tests"
+          uv run pytest -v -m unit --cov=src --cov-report= --tb=long
+          echo "::endgroup::"
         env:
           COVERAGE_FILE: .coverage.unit
 
@@ -65,7 +67,10 @@ jobs:
         run: uv sync
 
       - name: Run integration tests with coverage
-        run: uv run pytest -v -m integration --cov=src --cov-report=
+        run: |
+          echo "::group::Integration tests"
+          uv run pytest -v -m integration --cov=src --cov-report= --tb=long
+          echo "::endgroup::"
         env:
           COVERAGE_FILE: .coverage.integration
           POSTGRES_DB: ${{ env.POSTGRES_DATABASE }}
@@ -77,6 +82,15 @@ jobs:
         with:
           name: coverage-integration
           path: .coverage.integration
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-integration
+          path: |
+            *.log
+            pytest.log
 
   e2e-tests:
     runs-on: ubuntu-latest
@@ -90,3 +104,44 @@ jobs:
           POSTGRES_PASSWORD: test_pass
         ports:
           - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b
+        with:
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run E2E tests with coverage
+        run: |
+          echo "::group::E2E tests"
+          uv run pytest -v -m e2e --cov=src --cov-report= --tb=long
+          echo "::endgroup::"
+        env:
+          COVERAGE_FILE: .coverage.e2e
+          POSTGRES_DB: ${{ env.POSTGRES_DATABASE }}
+          POSTGRES_USER: ${{ env.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
+
+      - name: Upload E2E coverage
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-e2e
+          path: .coverage.e2e
+
+      - name: Upload test logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-logs-e2e
+          path: |
+            *.log
+            pytest.log
