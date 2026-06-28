@@ -6,6 +6,8 @@ import pytest
 from src.database.models.outbox_messages import OutboxMessage
 from src.repositories.outbox_messages import MAX_PUBLISH_ERRORS_COUNT, OutboxMessageRepository
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def mock_session() -> AsyncMock:

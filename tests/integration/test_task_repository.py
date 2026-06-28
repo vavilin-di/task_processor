@@ -8,6 +8,8 @@ from src.database.models.tasks import Task
 from src.enums import TaskPriority, TaskStatus
 from src.repositories.tasks import TaskRepository
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture
 def repo(session: AsyncSession) -> TaskRepository:

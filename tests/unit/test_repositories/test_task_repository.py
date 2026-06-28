@@ -6,6 +6,8 @@ from src.database.models.tasks import Task
 from src.enums import TaskStatus
 from src.repositories.tasks import TaskRepository
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def mock_session() -> AsyncMock:

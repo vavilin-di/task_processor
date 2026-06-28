@@ -1,7 +1,10 @@
+import pytest
 from pydantic import SecretStr
 
 from src.settings.postgres import PostgresSettings
 from src.settings.rabbit_mq import RabbitMQSettings
+
+pytestmark = pytest.mark.unit
 
 
 class TestPostgresSettings:

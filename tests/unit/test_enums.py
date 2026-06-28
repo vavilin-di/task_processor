@@ -2,6 +2,8 @@ import pytest
 
 from src.enums import TaskPriority, TaskStatus
 
+pytestmark = pytest.mark.unit
+
 
 class TestTaskStatus:
     """Тесты для перечисления TaskStatus."""

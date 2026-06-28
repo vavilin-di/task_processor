@@ -6,6 +6,8 @@ import pytest
 
 from src.workers.utilities import use_broker
 
+pytestmark = pytest.mark.unit
+
 
 @pytest.fixture
 def mock_broker() -> AsyncMock:

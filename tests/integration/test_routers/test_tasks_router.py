@@ -1,7 +1,10 @@
+import pytest
 from httpx import AsyncClient
 from starlette import status as status_codes
 
 from src.enums import TaskPriority, TaskStatus
+
+pytestmark = pytest.mark.integration
 
 
 def _create_task_payload(**overrides: object) -> dict[str, object]:

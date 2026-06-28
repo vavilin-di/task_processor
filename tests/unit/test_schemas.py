@@ -12,6 +12,8 @@ from src.schemas.tasks import Task, TaskCreate, TaskFilter
 
 ROUTING_KEY = "task.created"
 
+pytestmark = pytest.mark.unit
+
 
 def _make_task_create_data(**overrides: Any) -> dict[str, Any]:
     """Базовые данные для создания задачи."""

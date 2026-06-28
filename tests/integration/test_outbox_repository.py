@@ -10,6 +10,8 @@ from src.enums import TaskPriority, TaskStatus
 from src.repositories.outbox_messages import OutboxMessageRepository
 from src.repositories.sqlalchemy_repository import SQLAlchemyRepository
 
+pytestmark = pytest.mark.integration
+
 
 @pytest.fixture
 def repo(session: AsyncSession) -> OutboxMessageRepository:

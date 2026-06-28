@@ -5,6 +5,8 @@ import pytest
 
 from src.services.outbox_messages import OutboxMessageService
 
+pytestmark = pytest.mark.unit
+
 
 async def _async_gen_from_list(items: list) -> AsyncGenerator:
     """Создаёт асинхронный генератор из списка для мока."""
