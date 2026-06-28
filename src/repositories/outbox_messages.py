@@ -1,3 +1,4 @@
+from collections.abc import AsyncGenerator
 from typing import Any, Iterable
 
 from sqlalchemy import func, not_, select, update
@@ -10,7 +11,9 @@ MAX_PUBLISH_ERRORS_COUNT = 5
 
 
 class OutboxMessageRepository(SQLAlchemyRepository[OutboxMessage]):
-    async def get_not_published_outbox_messages(self, limit: int = 10) -> list[tuple[int, str, dict[str, Any]]]:
+    async def get_not_published_outbox_messages(
+        self, limit: int = 10
+    ) -> AsyncGenerator[tuple[int, str, dict[Any, Any]], None]:
         statement = (
             select(OutboxMessage.id, OutboxMessage.routing_key, OutboxMessage.payload)
             .where(not_(OutboxMessage.is_published), not_(OutboxMessage.is_failed))
@@ -19,7 +22,8 @@ class OutboxMessageRepository(SQLAlchemyRepository[OutboxMessage]):
             .with_for_update(skip_locked=True)
             .execution_options(stream_results=True, max_row_buffer=limit)
         )
-        return list((await self._session.execute(statement)).t.all())
+        async for item in await self._session.stream(statement):
+            yield item.tuple()
 
     async def mark_messages_as_published(self, message_ids: Iterable[int]) -> None:
         batch_update_statement = (

@@ -20,12 +20,9 @@ class OutboxMessageService:
 
     async def publish_batch(self, limit: int = 10):
         async with self._session.begin():
-            messages = await self._outbox_messages_repository.get_not_published_outbox_messages(limit)
-            if len(messages) == 0:
-                return
             published_message_ids = []
-
-            for task_id, routing_key, payload in messages:
+            items = self._outbox_messages_repository.get_not_published_outbox_messages(limit)
+            async for task_id, routing_key, payload in items:
                 try:
                     await self._broker.publish(payload, TASKS_QUEUE, routing_key=routing_key)
                     published_message_ids.append(task_id)
