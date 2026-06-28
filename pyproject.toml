@@ -97,3 +97,4 @@ markers = [
     "integration: Integration tests (require database)",
     "e2e: End-to-end tests (require full stack)",
 ]
+disable_test_id_escaping_and_forfeit_all_rights_to_community_support = true
