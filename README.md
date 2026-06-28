@@ -76,7 +76,7 @@
 flowchart LR
     Client["Клиент (HTTP)"] -->|POST /tasks| API["FastAPI"]
     API -->|1. Создать задачу| DB[("PostgreSQL")]
-    API -->|2. Запись в outbox<br/>(одна транзакция)| DB
+    API -->|2. Запись в outbox (одна транзакция)| DB
     DB -->|3. Опрос outbox| Worker["Outbox Publisher"]
     Worker -->|4. Публикация| RMQ[("RabbitMQ")]
     RMQ -->|5. Обработка| Consumer["DLQ Consumer"]
