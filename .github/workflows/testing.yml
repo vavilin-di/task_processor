@@ -34,6 +34,8 @@ jobs:
           uv run pytest -v -m unit --cov=src --cov-report= --tb=long
           echo "::endgroup::"
           mv .coverage .coverage.unit
+        env:
+          COVERAGE_FILE: .coverage.unit
 
       - name: Upload unit coverage
         uses: actions/upload-artifact@v4
@@ -76,6 +78,7 @@ jobs:
           echo "::endgroup::"
           mv .coverage .coverage.integration
         env:
+          COVERAGE_FILE: .coverage.integration
           POSTGRES_DB: ${{ env.POSTGRES_DATABASE }}
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
@@ -128,8 +131,8 @@ jobs:
           echo "::group::E2E tests"
           uv run pytest -v -m e2e --cov=src --cov-report= --tb=long
           echo "::endgroup::"
-          mv .coverage .coverage.e2e
         env:
+          COVERAGE_FILE: .coverage.e2e
           POSTGRES_DB: ${{ env.POSTGRES_DATABASE }}
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
