@@ -36,6 +36,9 @@ jobs:
         env:
           COVERAGE_FILE: .coverage.unit
 
+      - name: List files for debug
+        run: ls -la
+
       - name: Upload unit coverage
         uses: actions/upload-artifact@v4
         with:
