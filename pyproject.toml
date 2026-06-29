@@ -1,5 +1,5 @@
 [project]
-name = "async-task-manager"
+name = "task_processor"
 version = "0.1.0"
 description = "Асинхронный сервис управления задачами"
 readme = "README.md"
