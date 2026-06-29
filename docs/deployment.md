@@ -22,7 +22,7 @@
 **Клонирование репозитория:**
 
 ```bash
-git clone <url-репозитория>
+git clone [<url-репозитория>](https://github.com/vavilin-di/task_processor.git)
 cd task_processor
 ```
 

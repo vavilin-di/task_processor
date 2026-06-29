@@ -13,7 +13,7 @@
 
 ```bash
 # 1. Клонировать репозиторий
-git clone <repository-url>
+git clone https://github.com/vavilin-di/task_processor.git # (либо необходимая ветка)
 cd task_processor
 
 # 2. Создать файл .env из шаблона
