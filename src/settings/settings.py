@@ -1,10 +1,11 @@
+import tomllib
 from functools import cache
 from typing import Literal, Self
 
 from pydantic import AnyHttpUrl, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .common import ENV_FILE_PATH
+from .common import ENV_FILE_PATH, PYPROJ_FILE_PATH
 from .postgres import PostgresSettings
 from .rabbit_mq import RabbitMQSettings
 
@@ -37,6 +38,15 @@ class Settings(BaseSettings):
     @model_validator(mode="after")
     def set_debug(self) -> Self:
         self.DEBUG = self.APP_ENV != "production"
+        return self
+
+    @model_validator(mode="after")
+    def set_properties_from_pyproject(self) -> Self:
+        with PYPROJ_FILE_PATH.open("rb") as pyproj_file:
+            project_data = tomllib.load(pyproj_file)
+            project_properties = project_data["project"]
+            self.APP_TITLE = project_properties["name"]
+            self.APP_VERSION = project_properties["version"]
         return self
 
 
