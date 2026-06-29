@@ -25,7 +25,7 @@
 - [`src/schemas/`](src/schemas/) — Pydantic-валидация, сериализация/десериализация
 - [`src/repositories/sqlalchemy_repository.py`](src/repositories/sqlalchemy_repository.py) — протокол/интерфейс (проверка контракта)
 - [`src/repositories/tasks.py`](src/repositories/tasks.py) — логика `cancel_task`, `get_task_status` (с замокированным `SQLAlchemyRepository`)
-- [`src/repositories/outbox_messages.py`](src/repositories/outbox_messages.py) — логика `add_error`, `mark_task_as_published`, `get_not_published_task_ids` (с замокированным `SQLAlchemyRepository`)
+- [`src/repositories/outbox_messages.py`](src/repositories/outbox_messages.py) — логика `add_error`, `mark_messages_as_published`, `get_not_published_outbox_messages` (с замокированным `SQLAlchemyRepository`)
 - [`src/workers/utilities.py`](src/workers/utilities.py) — `use_broker` (контекстный менеджер)
 - [`src/workers/outbox_publisher/outbox_publish_worker.py`](src/workers/outbox_publisher/outbox_publish_worker.py) — `process_batch` (с замокированными `session`, `broker`, `repo`)
 - [`src/settings/`](src/settings/) — корректность построения URL через model_validator
@@ -37,7 +37,7 @@
 **Что тестируем:**
 - [`src/repositories/sqlalchemy_repository.py`](src/repositories/sqlalchemy_repository.py) — полный CRUD против реального PostgreSQL через testcontainers
 - [`src/repositories/tasks.py`](src/repositories/tasks.py) — `cancel_task`, `get_task_status` с реальной БД
-- [`src/repositories/outbox_messages.py`](src/repositories/outbox_messages.py) — `get_not_published_task_ids`, `mark_task_as_published`, `add_error` с реальной БД
+- [`src/repositories/outbox_messages.py`](src/repositories/outbox_messages.py) — `get_not_published_outbox_messages`, `mark_messages_as_published`, `add_error` с реальной БД
 - [`src/routers/tasks.py`](src/routers/tasks.py) — HTTP-эндпоинты через `TestClient` FastAPI с реальной БД и замокированным брокером
 
 **Инструменты:** `pytest`, `pytest-asyncio`, `httpx` (TestClient), `SQLAlchemy` + `asyncpg`, `testcontainers` (PostgreSQL)
@@ -55,18 +55,21 @@
 
 ```
 tests/
+├── __init__.py
 ├── conftest.py                  # Общие фикстуры (engine, session, container, app)
 ├── unit/
+│   ├── __init__.py
 │   ├── test_enums.py
 │   ├── test_schemas.py
+│   ├── test_settings.py
 │   ├── test_repositories/
 │   │   ├── test_task_repository.py      # с mock
 │   │   └── test_outbox_repository.py    # с mock
-│   ├── test_mq/
-│   │   ├── test_utilities.py
-│   │   └── test_outbox_publish_worker.py
-│   └── test_settings.py
+│   └── test_mq/
+│       ├── test_utilities.py
+│       └── test_outbox_message_service.py
 ├── integration/
+│   ├── __init__.py
 │   ├── conftest.py              # Фикстуры для реальной БД (create_all / drop_all)
 │   ├── test_sqlalchemy_repository.py
 │   ├── test_task_repository.py
@@ -75,6 +78,8 @@ tests/
 │       ├── conftest.py          # TestClient + DI override
 │       └── test_tasks_router.py
 └── e2e/
+    ├── __init__.py
+    ├── conftest.py
     └── test_health_check.py
 ```
 
@@ -331,18 +336,18 @@ def outbox_repo(mock_session):
 
 
 class TestOutboxMessageRepository:
-    async def test_get_not_published_task_ids(self, outbox_repo, mock_session):
+    async def test_get_not_published_outbox_messages(self, outbox_repo, mock_session):
         mock_result = MagicMock()
         mock_result.t.all.return_value = [(1, "task.created"), (2, "task.updated")]
         mock_session.execute.return_value = mock_result
 
-        result = await outbox_repo.get_not_published_task_ids(limit=10)
+        result = await outbox_repo.get_not_published_outbox_messages(limit=10)
         assert result == [(1, "task.created"), (2, "task.updated")]
         mock_session.execute.assert_awaited_once()
 
-    async def test_mark_task_as_published(self, outbox_repo, mock_session):
+    async def test_mark_messages_as_published(self, outbox_repo, mock_session):
         outbox_repo.update = AsyncMock()
-        await outbox_repo.mark_task_as_published(task_id=1)
+        await outbox_repo.mark_messages_as_published(message_ids=[1])
         outbox_repo.update.assert_awaited_once()
 
     async def test_add_error_below_threshold(self, outbox_repo, mock_session):
@@ -377,7 +382,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 
-from src.mq.outbox_publish_worker import process_batch
+from src.workers.outbox_publisher.outbox_publish_worker import process_batch
 
 
 class TestProcessBatch:
@@ -398,35 +403,35 @@ class TestProcessBatch:
     @pytest.fixture
     def mock_repo(self):
         repo = AsyncMock()
-        repo.get_not_published_task_ids = AsyncMock()
-        repo.mark_task_as_published = AsyncMock()
+        repo.get_not_published_outbox_messages = AsyncMock()
+        repo.mark_messages_as_published = AsyncMock()
         repo.add_error = AsyncMock()
         return repo
 
     async def test_publishes_all_messages(self, mock_session, mock_broker, mock_repo):
-        mock_repo.get_not_published_task_ids.return_value = [(1, "task.created"), (2, "task.updated")]
+        mock_repo.get_not_published_outbox_messages.return_value = [(1, "task.created"), (2, "task.updated")]
 
         await process_batch(mock_session, mock_broker, mock_repo)
 
         assert mock_broker.publish.await_count == 2
-        assert mock_repo.mark_task_as_published.await_count == 2
+        assert mock_repo.mark_messages_as_published.await_count == 2
 
     async def test_handles_publish_error(self, mock_session, mock_broker, mock_repo):
-        mock_repo.get_not_published_task_ids.return_value = [(1, "task.created")]
+        mock_repo.get_not_published_outbox_messages.return_value = [(1, "task.created")]
         mock_broker.publish.side_effect = Exception("Connection lost")
 
         await process_batch(mock_session, mock_broker, mock_repo)
 
         mock_repo.add_error.assert_awaited_once_with(1, "Connection lost")
-        mock_repo.mark_task_as_published.assert_not_awaited()
+        mock_repo.mark_messages_as_published.assert_not_awaited()
 
     async def test_empty_batch(self, mock_session, mock_broker, mock_repo):
-        mock_repo.get_not_published_task_ids.return_value = []
+        mock_repo.get_not_published_outbox_messages.return_value = []
 
         await process_batch(mock_session, mock_broker, mock_repo)
 
         mock_broker.publish.assert_not_awaited()
-        mock_repo.mark_task_as_published.assert_not_awaited()
+        mock_repo.mark_messages_as_published.assert_not_awaited()
 ```
 
 ### 6.6. Integration-тест: SQLAlchemyRepository

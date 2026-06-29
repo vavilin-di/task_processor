@@ -1,4 +1,4 @@
-# async-task-manager
+# task_processor
 
 ### SonarQuality:
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=vavilin-di_task_processor&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=vavilin-di_task_processor)
@@ -74,33 +74,33 @@
 
 **Task**
 
-| Поле          | Тип         | Описание                                                    |
-| ------------- | ----------- | ----------------------------------------------------------- |
-| `id`          | UUID        | Первичный ключ                                              |
-| `name`        | String(255) | Название задачи                                             |
-| `description` | Text        | Описание                                                    |
-| `priority`    | Enum        | Low / Medium / High                                         |
-| `status`      | Enum        | New / Pending / InProgress / Completed / Failed / Cancelled |
-| `payload`     | JSON        | Произвольные данные                                         |
-| `created_at`  | DateTime    | Дата создания                                               |
-| `started_at`  | DateTime    | Дата начала                                                 |
-| `finished_at` | DateTime    | Дата завершения                                             |
-| `result`      | JSON        | Результат                                                   |
-| `errors`      | JSON        | Ошибки                                                      |
-| `is_active`   | Boolean     | Soft-delete                                                 |
+| Поле          | Тип      | Описание                                                    |
+| ------------- | -------- | ----------------------------------------------------------- |
+| `id`          | Integer  | Первичный ключ                                              |
+| `name`        | String   | Название задачи                                             |
+| `description` | String   | Описание                                                    |
+| `priority`    | Enum     | Low / Medium / High                                         |
+| `status`      | Enum     | New / Pending / InProgress / Completed / Failed / Cancelled |
+| `payload`     | JSON     | Произвольные данные                                         |
+| `created_at`  | DateTime | Дата создания                                               |
+| `started_at`  | DateTime | Дата начала                                                 |
+| `finished_at` | DateTime | Дата завершения                                             |
+| `result`      | JSON     | Результат                                                   |
+| `errors`      | JSON     | Ошибки                                                      |
+| `is_active`   | Boolean  | Soft-delete                                                 |
 
 **OutboxMessage**
 
-| Поле           | Тип                          | Описание           |
-| -------------- | ---------------------------- | ------------------ |
-| `id`           | UUID                         | Первичный ключ     |
-| `aggregate_id` | UUID (FK → tasks.id CASCADE) | ID задачи          |
-| `routing_key`  | String                       | Ключ маршрутизации |
-| `payload`      | JSON                         | Данные сообщения   |
-| `is_published` | Boolean                      | Флаг публикации    |
-| `is_failed`    | Boolean                      | Флаг ошибки        |
-| `created_at`   | DateTime                     | Дата создания      |
-| `errors`       | ARRAY(String)                | История ошибок     |
+| Поле           | Тип                     | Описание           |
+| -------------- | ----------------------- | ------------------ |
+| `id`           | Integer                 | Первичный ключ     |
+| `aggregate_id` | Integer (FK → tasks.id) | ID задачи          |
+| `routing_key`  | String                  | Ключ маршрутизации |
+| `payload`      | JSON                    | Данные сообщения   |
+| `is_published` | Boolean                 | Флаг публикации    |
+| `is_failed`    | Boolean                 | Флаг ошибки        |
+| `created_at`   | DateTime                | Дата создания      |
+| `errors`       | ARRAY(String)           | История ошибок     |
 
 Индекс: `outbox_messages_not_published_idx` (`created_at` WHERE `is_published = false` AND `is_failed = false`)
 
@@ -108,7 +108,7 @@
 
 | Поле                   | Тип      | Описание            |
 | ---------------------- | -------- | ------------------- |
-| `id`                   | UUID     | Первичный ключ      |
+| `id`                   | Integer  | Первичный ключ      |
 | `original_routing_key` | String   | Исходный ключ       |
 | `original_payload`     | JSON     | Исходные данные     |
 | `error_type`           | String   | Тип ошибки          |
@@ -152,8 +152,8 @@
 
 ```bash
 # 1. Клонировать репозиторий
-git clone <repo-url>
-cd async-task-manager
+git clone https://github.com/vavilin-di/task_processor.git
+cd task_processor
 
 # 2. Настроить переменные окружения
 cp .env.example .env
@@ -185,7 +185,7 @@ make start_dlq_consumer_worker
 ## Структура проекта
 
 ```
-async-task-manager/
+task_processor/
 ├── src/
 │   ├── __init__.py
 │   ├── app.py                          # FastAPI приложение
@@ -235,6 +235,7 @@ async-task-manager/
 │           ├── dlq_consumer_worker.py
 │           └── run_dlq_consumer_worker.py
 ├── tests/
+│   ├── __init__.py
 │   ├── conftest.py                     # Общие фикстуры
 │   ├── unit/                           # Unit-тесты (~80%)
 │   │   ├── test_enums.py
@@ -247,6 +248,7 @@ async-task-manager/
 │   │       ├── test_utilities.py
 │   │       └── test_outbox_message_service.py
 │   ├── integration/                    # Integration-тесты (~20%)
+│   │   ├── __init__.py
 │   │   ├── conftest.py
 │   │   ├── test_sqlalchemy_repository.py
 │   │   ├── test_task_repository.py
@@ -255,6 +257,8 @@ async-task-manager/
 │   │       ├── conftest.py
 │   │       └── test_tasks_router.py
 │   └── e2e/
+│       ├── __init__.py
+│       ├── conftest.py
 │       └── test_health_check.py
 ├── infrastructure/
 │   ├── .dockerignore
@@ -267,11 +271,19 @@ async-task-manager/
 │       ├── testing.yml                 # Unit + Integration + E2E
 │       └── sonarcloud.yml              # SonarCloud анализ
 ├── docs/
+│   ├── administration.md               # Инструкция администратора
+│   ├── api.md                          # API документация
+│   ├── architecture.md                 # Архитектурная документация
+│   ├── deployment.md                   # Инструкция по развёртыванию
+│   ├── development.md                  # Инструкция для разработчика
+│   ├── outbox_pattern.md               # Transactional Outbox Pattern
 │   └── testing.md                      # Стратегия тестирования
-├── pyproject.toml
-├── Makefile
+├── .env.example
 ├── alembic.ini
+├── Makefile
+├── pyproject.toml
 ├── sonar-project.properties
+├── uv.lock
 └── README.md
 ```
 
@@ -457,7 +469,13 @@ make test_cov
 
 ## Документация
 
-- [Стратегия тестирования](docs/testing.md) — подробное описание подходов, инструментов и структуры тестов
+- [Архитектура проекта](docs/architecture.md) — слои приложения, модели данных, DI-контейнер, Mermaid-диаграммы
+- [API документация](docs/api.md) — эндпоинты, схемы запросов/ответов, примеры curl
+- [Инструкция для разработчика](docs/development.md) — быстрый старт, переменные окружения, Makefile, линтеры, Docker
+- [Инструкция по развёртыванию](docs/deployment.md) — Docker Compose, production-рекомендации, CI/CD
+- [Инструкция администратора](docs/administration.md) — установка, запуск сервисов, мониторинг, DLQ, решение проблем
+- [Transactional Outbox Pattern](docs/outbox_pattern.md) — реализация паттерна в проекте
+- [Стратегия тестирования](docs/testing.md) — подходы, инструменты, структура и примеры тестов
 
 ---
 

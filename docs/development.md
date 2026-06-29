@@ -14,7 +14,7 @@
 ```bash
 # 1. Клонировать репозиторий
 git clone <repository-url>
-cd async-task-manager
+cd task_processor
 
 # 2. Создать файл .env из шаблона
 cp .env.example .env
@@ -107,8 +107,9 @@ make start_main_app WORKERS_COUNT=4
 ## 4. Структура проекта
 
 ```
-async-task-manager/
+task_processor/
 ├── src/
+│   ├── __init__.py
 │   ├── app.py                          # FastAPI приложение, обработчики ошибок
 │   ├── di.py                           # DI-контейнер Dishka
 │   ├── enums.py                        # TaskStatus, TaskPriority (StrEnum)
@@ -156,6 +157,7 @@ async-task-manager/
 │           ├── dlq_consumer_worker.py      #   Логика воркера
 │           └── run_dlq_consumer_worker.py  # Точка входа
 ├── tests/
+│   ├── __init__.py
 │   ├── conftest.py                     # Общие фикстуры pytest
 │   ├── unit/                           # Unit-тесты (mock, без внешних зависимостей)
 │   │   ├── test_enums.py
@@ -168,28 +170,36 @@ async-task-manager/
 │   │       ├── test_outbox_repository.py
 │   │       └── test_task_repository.py
 │   ├── integration/                    # Integration-тесты (реальная БД)
+│   │   ├── __init__.py
 │   │   ├── conftest.py                 #   Фикстуры для интеграционных тестов
 │   │   ├── test_outbox_repository.py
 │   │   ├── test_sqlalchemy_repository.py
 │   │   ├── test_task_repository.py
 │   │   └── test_routers/
+│   │       ├── conftest.py
 │   │       └── test_tasks_router.py
 │   └── e2e/                            # E2E-тесты (полный стек)
+│       ├── __init__.py
 │       ├── conftest.py
 │       └── test_health_check.py
 ├── infrastructure/
-│   ├── docker-compose.yml              # Docker Compose (postgres, rabbitmq, app, workers)
+│   ├── .dockerignore
 │   ├── Dockerfile                      # Multi-stage сборка
-│   └── .dockerignore
+│   └── docker-compose.yml              # Docker Compose (postgres, rabbitmq, app, workers)
 ├── docs/
+│   ├── administration.md               # Инструкция администратора
+│   ├── api.md                          # API документация
 │   ├── architecture.md                 # Архитектурная документация
+│   ├── deployment.md                   # Инструкция по развёртыванию
 │   ├── development.md                  # Данный файл
+│   ├── outbox_pattern.md               # Transactional Outbox Pattern
 │   └── testing.md                      # Стратегия тестирования
 ├── .github/workflows/                  # GitHub Actions
 │   ├── ci.yml                          #   Основной CI-пайплайн
 │   ├── code-quality-check.yml          #   Проверка качества кода
 │   ├── testing.yml                     #   Тестирование
 │   └── sonarcloud.yml                  #   Анализ SonarCloud
+├── .env.example
 ├── alembic.ini                         # Конфигурация Alembic
 ├── Makefile                            # Makefile с командами
 ├── pyproject.toml                      # Зависимости и настройки инструментов
@@ -440,7 +450,8 @@ jobs:
 
 [`src/repositories/sqlalchemy_repository.py`](src/repositories/sqlalchemy_repository.py) — базовый класс репозитория. Все репозитории наследуются от него:
 
-- [`src/repositories/tasks.py`](src/repositories/tasks.py) — `TaskRepository`
+- [`src/repositories/soft_delete_sqlalchemy_repository.py`](src/repositories/soft_delete_sqlalchemy_repository.py) — `SoftDeleteSQLAlchemyRepository` (промежуточный базовый класс с soft-delete)
+- [`src/repositories/tasks.py`](src/repositories/tasks.py) — `TaskRepository` (наследуется от `SoftDeleteSQLAlchemyRepository`)
 - [`src/repositories/outbox_messages.py`](src/repositories/outbox_messages.py) — `OutboxMessageRepository`
 - [`src/repositories/dlq_messages.py`](src/repositories/dlq_messages.py) — `DLQMessageRepository`
 
@@ -455,7 +466,9 @@ jobs:
 
 ### Soft-delete для задач
 
-Удаление задач выполняется через soft-delete: запись помечается как удалённая (`deleted_at`), но физически остаётся в БД. Это позволяет:
+Удаление задач выполняется через soft-delete: запись помечается как удалённая (`deleted_at`), но физически остаётся в БД. Реализация находится в [`src/repositories/soft_delete_sqlalchemy_repository.py`](src/repositories/soft_delete_sqlalchemy_repository.py) — базовый класс `SoftDeleteSQLAlchemyRepository`, который наследуется от `SQLAlchemyRepository` и переопределяет методы `delete` и `get_many`, добавляя фильтрацию по `deleted_at`.
+
+Это позволяет:
 - Восстанавливать удалённые задачи
 - Сохранять ссылочную целостность
 - Аудировать историю изменений
