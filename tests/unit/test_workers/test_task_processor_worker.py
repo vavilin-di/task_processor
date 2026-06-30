@@ -127,3 +127,23 @@ class TestTaskProcessorWorker:
 
         mock_broker.subscriber.assert_called_once()
         assert worker._subscriber is not None  # noqa: S101
+
+
+class TestGetTaskProcessorWorker:
+    """Unit-тесты для get_task_processor_worker."""
+
+    async def test_get_task_processor_worker_creates_worker(
+        self,
+    ) -> None:
+        """get_task_processor_worker создаёт TaskProcessorWorker."""
+        from src.workers.task_processor.task_processor_worker import get_task_processor_worker
+
+        mock_container = MagicMock()
+        mock_broker = AsyncMock()
+        mock_container.get = AsyncMock(return_value=mock_broker)
+
+        worker = await get_task_processor_worker(mock_container)
+
+        assert worker is not None  # noqa: S101
+        assert worker._broker is mock_broker  # noqa: S101
+        assert worker._container is mock_container  # noqa: S101
