@@ -30,4 +30,9 @@ class RabbitMQSettings(BaseSettings):
         )
         return self
 
-    model_config = SettingsConfigDict(env_prefix="RABBITMQ_", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_prefix="RABBITMQ_",
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )

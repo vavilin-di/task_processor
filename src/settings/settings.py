@@ -2,7 +2,7 @@ import tomllib
 from functools import cache
 from typing import Literal, Self
 
-from pydantic import AnyHttpUrl, model_validator
+from pydantic import AnyHttpUrl, Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from .common import ENV_FILE_PATH, PYPROJ_FILE_PATH
@@ -32,18 +32,12 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: list[AnyHttpUrl] = []
 
-    postgres: PostgresSettings | None = None
+    postgres: PostgresSettings = Field(default_factory=PostgresSettings)
     rabbit_mq: RabbitMQSettings | None = None
 
     OUTBOX_TTL_HRS: int = 24
     OUTBOX_CLEANUP_BATCH_SIZE: int = 1000
     OUTBOX_CLEANUP_INTERVAL_SEC: int = 3600
-
-    @model_validator(mode="after")
-    def init_nested_settings(self) -> Self:
-        if self.postgres is None:
-            self.postgres = PostgresSettings()
-        return self
 
     @model_validator(mode="after")
     def set_debug(self) -> Self:
