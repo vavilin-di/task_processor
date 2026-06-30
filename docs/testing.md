@@ -84,6 +84,8 @@ tests/
 │   └── test_routers/
 │       ├── conftest.py          # TestClient + DI override
 │       └── test_tasks_router.py
+├── load/
+│   └── locustfile.py              # Нагрузочное тестирование (Locust)
 └── e2e/
     ├── __init__.py
     ├── conftest.py
@@ -94,37 +96,19 @@ tests/
 
 ## 4. Инструменты и конфигурация
 
-### 4.1. Зависимости (добавить в `pyproject.toml`)
+### 4.1. Зависимости
 
-```toml
-[dependency-groups]
-dev = [
-    "pytest>=8.0.0",
-    "pytest-asyncio>=0.24.0",
-    "pytest-mock>=3.14.0",
-    "httpx>=0.27.0",
-    "testcontainers>=4.0.0",   # PostgreSQL testcontainer для integration/e2e-тестов
-]
-```
+Актуальный список dev-зависимостей — в [`pyproject.toml`](pyproject.toml) в секции `[dependency-groups] dev`.
 
-### 4.2. Конфигурация pytest (`pyproject.toml`)
+Ключевые инструменты:
+- `pytest`, `pytest-asyncio`, `pytest-mock`, `pytest-cov` — unit/integration тесты
+- `httpx` — HTTP-клиент для тестирования эндпоинтов
+- `testcontainers` — PostgreSQL testcontainer для integration/e2e-тестов
+- `locust` — нагрузочное тестирование
 
-```toml
-[tool.pytest.ini_options]
-asyncio_mode = "auto"
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-filterwarnings = [
-    "ignore::DeprecationWarning",
-]
-markers = [
-    "unit: Unit tests (fast, no external dependencies)",
-    "integration: Integration tests (require database)",
-    "e2e: End-to-end tests (require full stack)",
-]
-```
+### 4.2. Конфигурация pytest
+
+Актуальная конфигурация pytest — в [`pyproject.toml`](pyproject.toml) в секции `[tool.pytest.ini_options]`.
 
 ### 4.3. Makefile-команды
 
@@ -140,6 +124,9 @@ test_integration:
 
 test_cov:
 	uv run pytest -v --cov=src --cov-report=term-missing --cov-report=html
+
+load_test_web:
+	uv run locust -f tests/load/locustfile.py --host=http://localhost:8000 --web-host=0.0.0.0 --web-port=8089
 ```
 
 ---

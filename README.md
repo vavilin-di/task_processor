@@ -26,20 +26,20 @@
 
 ## Технологический стек
 
-| Категория                | Технологии                                                                                                                           |
-| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------ |
-| **Интерпретатор Python** | CPython 3.12                                                                                                                         |
-| **Веб-фреймворк**        | [FastAPI](https://fastapi.tiangolo.com/)                                                                                             |
-| **ORM**                  | [SQLAlchemy 2.x](https://www.sqlalchemy.org/) (async)                                                                                |
-| **Миграции**             | [Alembic](https://alembic.sqlalchemy.org/)                                                                                           |
-| **База данных**          | [PostgreSQL](https://www.postgresql.org/) ([asyncpg](https://github.com/MagicStack/asyncpg))                                         |
-| **Брокер сообщений**     | [RabbitMQ](https://www.rabbitmq.com/) ([FastStream](https://faststream.airt.ai/))                                                    |
-| **DI-контейнер**         | [Dishka](https://github.com/reagento/dishka)                                                                                         |
-| **Валидация**            | [Pydantic v2](https://docs.pydantic.dev/) + [Pydantic-Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)        |
-| **Пагинация**            | [sqlakeyset](https://github.com/djrobstep/sqlakeyset) (cursor-based)                                                                 |
-| **Пакетный менеджер**    | [uv](https://docs.astral.sh/uv/)                                                                                                     |
-| **Тестирование**         | [pytest](https://docs.pytest.org/), [pytest-asyncio](https://pytest-asyncio.readthedocs.io/), [httpx](https://www.python-httpx.org/) |
-| **Качество кода**        | [black](https://black.readthedocs.io/), [ruff](https://docs.astral.sh/ruff/), [mypy](https://mypy-lang.org/)                         |
+| Категория                | Технологии                                                                                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Интерпретатор Python** | CPython 3.12                                                                                                                                                       |
+| **Веб-фреймворк**        | [FastAPI](https://fastapi.tiangolo.com/)                                                                                                                           |
+| **ORM**                  | [SQLAlchemy 2.x](https://www.sqlalchemy.org/) (async)                                                                                                              |
+| **Миграции**             | [Alembic](https://alembic.sqlalchemy.org/)                                                                                                                         |
+| **База данных**          | [PostgreSQL](https://www.postgresql.org/) ([asyncpg](https://github.com/MagicStack/asyncpg))                                                                       |
+| **Брокер сообщений**     | [RabbitMQ](https://www.rabbitmq.com/) ([FastStream](https://faststream.airt.ai/))                                                                                  |
+| **DI-контейнер**         | [Dishka](https://github.com/reagento/dishka)                                                                                                                       |
+| **Валидация**            | [Pydantic v2](https://docs.pydantic.dev/) + [Pydantic-Settings](https://docs.pydantic.dev/latest/concepts/pydantic_settings/)                                      |
+| **Пагинация**            | [sqlakeyset](https://github.com/djrobstep/sqlakeyset) (cursor-based)                                                                                               |
+| **Пакетный менеджер**    | [uv](https://docs.astral.sh/uv/)                                                                                                                                   |
+| **Тестирование**         | [pytest](https://docs.pytest.org/), [pytest-asyncio](https://pytest-asyncio.readthedocs.io/), [httpx](https://www.python-httpx.org/), [Locust](https://locust.io/) |
+| **Качество кода**        | [black](https://black.readthedocs.io/), [ruff](https://docs.astral.sh/ruff/), [mypy](https://mypy-lang.org/)                                                       |
 
 ---
 
@@ -269,6 +269,8 @@ task_processor/
 │   │   └── test_routers/
 │   │       ├── conftest.py
 │   │       └── test_tasks_router.py
+│   ├── load/                             # Нагрузочное тестирование
+│   │   └── locustfile.py                 # Locust-сценарии
 │   └── e2e/
 │       ├── __init__.py
 │       ├── conftest.py
@@ -477,6 +479,9 @@ make test_integration
 
 # С отчётом о покрытии
 make test_cov
+
+# Нагрузочное тестирование (веб-интерфейс http://localhost:8089)
+make load_test_web
 ```
 
 ---

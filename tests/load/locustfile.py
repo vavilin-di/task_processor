@@ -1,15 +1,7 @@
 """Locust-файл для нагрузочного тестирования HTTP API task_processor.
 
 Запуск:
-    locust -f tests/load/locustfile.py --host=http://localhost:8000
-
-С веб-интерфейсом:
-    locust -f tests/load/locustfile.py --host=http://localhost:8000 --web-host=0.0.0.0 --web-port=8089
-
-Без веб-интерфейса (headless):
-    locust -f tests/load/locustfile.py --host=http://localhost:8000 \
-        --headless --users=50 --spawn-rate=5 --run-time=5m \
-        --csv=tests/load/reports/report
+    make load_test_web
 """
 
 from __future__ import annotations
