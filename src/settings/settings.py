@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: list[AnyHttpUrl] = []
 
     postgres: PostgresSettings = PostgresSettings()
-    rabbit_mq: RabbitMQSettings = RabbitMQSettings()
+    rabbit_mq: RabbitMQSettings | None = None
 
     OUTBOX_TTL_HRS: int = 24
     OUTBOX_CLEANUP_BATCH_SIZE: int = 1000

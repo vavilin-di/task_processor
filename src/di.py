@@ -69,6 +69,9 @@ class ServiceProvider(Provider):
 class BrokerProvider(Provider):
     @provide(scope=Scope.APP)
     def get_broker(self, settings: Settings) -> RabbitBroker:
+        if settings.rabbit_mq is None:
+            message = "RabbitMQ settings are not configured"
+            raise RuntimeError(message)
         return RabbitBroker(settings.rabbit_mq.DATABASE_URL)
 
 
