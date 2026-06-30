@@ -24,6 +24,7 @@ dev = [
     "coverage>=7.14.3",
     "debugpy>=1.8.21",
     "httpx>=0.28.1",
+    "locust>=2.44.4",
     "mypy>=2.1.0",
     "pytest>=9.1.0",
     "pytest-asyncio>=1.4.0",

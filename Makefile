@@ -46,3 +46,6 @@ test_integration:
 
 test_cov:
 	uv run pytest -v --cov=src --cov-report=term-missing --cov-report=html
+
+load_test_web:
+	uv run locust -f tests/load/locustfile.py --host=http://localhost:8000 --web-host=0.0.0.0 --web-port=8089

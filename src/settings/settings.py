@@ -32,12 +32,18 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: list[AnyHttpUrl] = []
 
-    postgres: PostgresSettings = PostgresSettings()
+    postgres: PostgresSettings | None = None
     rabbit_mq: RabbitMQSettings | None = None
 
     OUTBOX_TTL_HRS: int = 24
     OUTBOX_CLEANUP_BATCH_SIZE: int = 1000
     OUTBOX_CLEANUP_INTERVAL_SEC: int = 3600
+
+    @model_validator(mode="after")
+    def init_nested_settings(self) -> Self:
+        if self.postgres is None:
+            self.postgres = PostgresSettings()
+        return self
 
     @model_validator(mode="after")
     def set_debug(self) -> Self:
