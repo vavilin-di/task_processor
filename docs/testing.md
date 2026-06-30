@@ -15,8 +15,8 @@
 ## 2. Пирамида тестирования для данного проекта
 
 - E2E: 1 сценарий (health-check, сквозной flow)
-- Integration: ~20% тестов (репозитории + БД, роутеры + FastAPI TestClient)
-- Unit: ~80% тестов (схемы, репозитории (mock), enums, утилиты, outbox worker)
+- Integration: ~20% тестов (репозитории + БД, роутеры + FastAPI TestClient, сервисы + БД)
+- Unit: ~80% тестов (схемы, репозитории (mock), enums, утилиты, outbox worker, task processor worker, сервисы)
 
 ### 2.1. Unit-тесты (быстрые, без внешних зависимостей)
 
@@ -28,6 +28,8 @@
 - [`src/repositories/outbox_messages.py`](src/repositories/outbox_messages.py) — логика `add_error`, `mark_messages_as_published`, `get_not_published_outbox_messages` (с замокированным `SQLAlchemyRepository`)
 - [`src/workers/utilities.py`](src/workers/utilities.py) — `use_broker` (контекстный менеджер)
 - [`src/workers/outbox_publisher/outbox_publish_worker.py`](src/workers/outbox_publisher/outbox_publish_worker.py) — `process_batch` (с замокированными `session`, `broker`, `repo`)
+- [`src/workers/task_processor/task_processor_worker.py`](src/workers/task_processor/task_processor_worker.py) — `_handle_task_message` (с замокированным контейнером и сервисом)
+- [`src/services/tasks.py`](src/services/tasks.py) — `process_task`, `fail_task` (с замокированными репозиторием и сессией)
 - [`src/settings/`](src/settings/) — корректность построения URL через model_validator
 
 **Инструменты:** `pytest`, `pytest-asyncio`, `unittest.mock` / `pytest-mock`
@@ -65,15 +67,20 @@ tests/
 │   ├── test_repositories/
 │   │   ├── test_task_repository.py      # с mock
 │   │   └── test_outbox_repository.py    # с mock
-│   └── test_mq/
-│       ├── test_utilities.py
-│       └── test_outbox_message_service.py
+│   ├── test_mq/
+│   │   ├── test_utilities.py
+│   │   └── test_outbox_message_service.py
+│   ├── test_services/
+│   │   └── test_task_service.py         # process_task, fail_task (с mock)
+│   └── test_workers/
+│       └── test_task_processor_worker.py # _handle_task_message (с mock контейнера)
 ├── integration/
 │   ├── __init__.py
 │   ├── conftest.py              # Фикстуры для реальной БД (create_all / drop_all)
 │   ├── test_sqlalchemy_repository.py
 │   ├── test_task_repository.py
 │   ├── test_outbox_repository.py
+│   ├── test_task_service.py             # process_task, fail_task (с реальной БД)
 │   └── test_routers/
 │       ├── conftest.py          # TestClient + DI override
 │       └── test_tasks_router.py
@@ -812,3 +819,77 @@ jobs:
           POSTGRES_USER: ${{ env.POSTGRES_USER }}
           POSTGRES_PASSWORD: ${{ env.POSTGRES_PASSWORD }}
 ```
+
+---
+
+## 8. Мокирование Dishka-контейнера в unit-тестах
+
+При тестировании воркеров, которые используют `async with container() as request_container`, необходимо правильно настроить мок контейнера.
+
+### Проблема
+
+`container` — это `MagicMock`. Вызов `container()` возвращает `container.return_value`. `async with` на возвращённом объекте вызывает `__aenter__`.
+
+### Решение
+
+```python
+@pytest.fixture
+def mock_container() -> MagicMock:
+    container = MagicMock()
+    request_container = MagicMock()
+    # container() возвращает request_container
+    container.return_value = request_container
+    # async with на request_container вызывает его __aenter__
+    request_container.__aenter__ = AsyncMock(return_value=request_container)
+    request_container.__aexit__ = AsyncMock()
+    return container
+```
+
+В тесте настройка `request_container.get`:
+
+```python
+async def _setup_get(self, mock_container: MagicMock, mock_task_service: MockTaskService) -> None:
+    request_container = mock_container.return_value
+
+    async def get_side_effect(*args: object, **kwargs: object) -> MockTaskService:
+        return mock_task_service
+
+    request_container.get = get_side_effect
+```
+
+Ключевые моменты:
+1. `container.return_value = request_container` — чтобы `container()` возвращал `request_container`
+2. `request_container.__aenter__` — `AsyncMock`, возвращающий `request_container`
+3. `request_container.get` — **async-функция** (не `AsyncMock`), возвращающая замокированный сервис
+4. Сам сервис — простой класс с `AsyncMock`-методами (не `MagicMock`), чтобы избежать перехвата атрибутов
+
+---
+
+## 9. Timezone-совместимость с PostgreSQL
+
+При работе с `DateTime()` колонками в PostgreSQL (без `timezone=True`) необходимо передавать offset-naive datetime.
+
+### Проблема
+
+```python
+from datetime import UTC, datetime
+
+# datetime.now(UTC) возвращает offset-aware datetime
+# PostgreSQL колонка DateTime() (без timezone) ожидает offset-naive
+started_at=datetime.now(UTC)  # TypeError: can't subtract offset-naive and offset-aware datetimes
+```
+
+### Решение
+
+```python
+from datetime import UTC, datetime
+
+# .replace(tzinfo=None) делает datetime offset-naive
+started_at=datetime.now(UTC).replace(tzinfo=None)
+```
+
+### Когда это важно
+
+- Интеграционные тесты с реальной PostgreSQL через testcontainers
+- Любые запросы на запись/обновление `DateTime()` полей без timezone
+- Unit-тесты эту проблему не ловят, т.к. используют моки

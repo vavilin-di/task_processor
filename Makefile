@@ -23,6 +23,9 @@ dev:
 start_outbox_publish_worker:
 	uv run -m src.workers.outbox_publisher.run_outbox_publish_worker
 
+start_task_processor_worker:
+	uv run -m src.workers.task_processor.run_task_processor_worker
+
 start_dlq_consumer_worker:
 	uv run -m src.workers.dlq_consumer.run_dlq_consumer_worker
 

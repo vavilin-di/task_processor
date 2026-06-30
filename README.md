@@ -177,8 +177,14 @@ make dev
 # Outbox Publisher Worker (в отдельном терминале)
 make start_outbox_publish_worker
 
+# Task Processor Worker (в отдельном терминале)
+make start_task_processor_worker
+
 # DLQ Consumer Worker (в отдельном терминале)
 make start_dlq_consumer_worker
+
+# Outbox Cleanup Worker (в отдельном терминале)
+make start_outbox_cleanup_worker
 ```
 
 ---
@@ -232,9 +238,15 @@ task_processor/
 │       ├── outbox_publisher/
 │       │   ├── outbox_publish_worker.py
 │       │   └── run_outbox_publish_worker.py
-│       └── dlq_consumer/
-│           ├── dlq_consumer_worker.py
-│           └── run_dlq_consumer_worker.py
+│       ├── outbox_cleanup/
+│       │   ├── outbox_cleanup_worker.py
+│       │   └── run_outbox_cleanup_worker.py
+│       ├── dlq_consumer/
+│       │   ├── dlq_consumer_worker.py
+│       │   └── run_dlq_consumer_worker.py
+│       └── task_processor/
+│           ├── task_processor_worker.py
+│           └── run_task_processor_worker.py
 ├── tests/
 │   ├── __init__.py
 │   ├── conftest.py                     # Общие фикстуры
