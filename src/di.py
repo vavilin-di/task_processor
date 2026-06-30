@@ -14,6 +14,7 @@ from src.repositories.tasks import TaskRepository
 from src.services.outbox_messages import OutboxCleanupService, OutboxMessageService
 from src.services.tasks import TaskService
 from src.settings import Settings, get_settings
+from src.settings.rabbit_mq import RabbitMQSettings
 
 
 class DatabaseProvider(Provider):
@@ -69,10 +70,8 @@ class ServiceProvider(Provider):
 class BrokerProvider(Provider):
     @provide(scope=Scope.APP)
     def get_broker(self, settings: Settings) -> RabbitBroker:
-        if settings.rabbit_mq is None:
-            message = "RabbitMQ settings are not configured"
-            raise RuntimeError(message)
-        return RabbitBroker(settings.rabbit_mq.DATABASE_URL)
+        rabbit_settings = settings.rabbit_mq if settings.rabbit_mq is not None else RabbitMQSettings()
+        return RabbitBroker(rabbit_settings.DATABASE_URL)
 
 
 class SettingsProvider(Provider):

@@ -3,8 +3,6 @@ from typing import Self
 from pydantic import PostgresDsn, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .common import ENV_FILE_PATH
-
 DEFAULT_POSTGRES_DRIVER = "postgresql+asyncpg"
 
 
@@ -36,4 +34,4 @@ class PostgresSettings(BaseSettings):
         )
         return self
 
-    model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, env_prefix="POSTGRES_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="POSTGRES_", extra="ignore")

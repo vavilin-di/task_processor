@@ -37,7 +37,7 @@ class DLQConsumerWorker:
     async def run(self) -> None:
         async with use_broker(self._broker, logger):
             self._register_subscriber()
-            await asyncio.Future()
+            await asyncio.get_running_loop().create_future()
 
     def _register_subscriber(self) -> None:
         self._subscriber = self._broker.subscriber(TASKS_DLQ_QUEUE)(self._handle_dlq_message)

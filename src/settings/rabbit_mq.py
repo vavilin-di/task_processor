@@ -3,8 +3,6 @@ from typing import Self
 from pydantic import AmqpDsn, SecretStr, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from .common import ENV_FILE_PATH
-
 
 class RabbitMQSettings(BaseSettings):
     HOST: str
@@ -32,4 +30,4 @@ class RabbitMQSettings(BaseSettings):
         )
         return self
 
-    model_config = SettingsConfigDict(env_file=ENV_FILE_PATH, env_prefix="RABBITMQ_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="RABBITMQ_", extra="ignore")

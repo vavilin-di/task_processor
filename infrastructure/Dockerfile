@@ -15,6 +15,7 @@ COPY --from=builder /app/.venv /app/.venv
 COPY src/ ./src/
 COPY alembic.ini ./
 COPY pyproject.toml ./
+COPY .env ./.env
 
 ENV PATH="/app/.venv/bin:$PATH"
 

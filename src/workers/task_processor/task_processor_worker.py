@@ -37,7 +37,7 @@ class TaskProcessorWorker:
         async with use_broker(self._broker, logger):
             self._register_subscriber()
             logger.info(f"TaskProcessorWorker запущен и ожидает сообщения из очереди {TASKS_QUEUE.name}")
-            await asyncio.Future()
+            await asyncio.get_running_loop().create_future()
 
     def _register_subscriber(self) -> None:
         """Регистрирует обработчик сообщений из очереди task_processing."""
