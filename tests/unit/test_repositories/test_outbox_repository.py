@@ -95,3 +95,27 @@ class TestOutboxMessageRepository:
 
         with pytest.raises(AssertionError, match="OutboxMessage с id=1 не найдено"):
             await outbox_repo.add_error(task_id=1, error="Error")
+
+    async def test_delete_published_older_than_deletes_expired(self, outbox_repo: OutboxMessageRepository) -> None:
+        """Сообщения старше ttl удаляются."""
+        mock_session = outbox_repo._session
+        mock_result = MagicMock()
+        mock_result.scalar_one.return_value = 5
+        mock_session.execute.return_value = mock_result  # type: ignore[attr-defined]
+
+        deleted = await outbox_repo.delete_published_older_than(ttl_hours=24, batch_size=100)
+
+        assert deleted == 5  # noqa: S101, PLR2004
+        mock_session.execute.assert_awaited_once()  # type: ignore[attr-defined]
+
+    async def test_delete_published_older_than_nothing_to_delete(self, outbox_repo: OutboxMessageRepository) -> None:
+        """Нет сообщений для удаления — возвращаем 0."""
+        mock_session = outbox_repo._session
+        mock_result = MagicMock()
+        mock_result.scalar_one.return_value = 0
+        mock_session.execute.return_value = mock_result  # type: ignore[attr-defined]
+
+        deleted = await outbox_repo.delete_published_older_than(ttl_hours=24, batch_size=100)
+
+        assert deleted == 0  # noqa: S101
+        mock_session.execute.assert_awaited_once()  # type: ignore[attr-defined]

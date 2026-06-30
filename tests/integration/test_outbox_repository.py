@@ -1,3 +1,4 @@
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 import pytest
@@ -129,3 +130,52 @@ class TestOutboxMessageRepository:
         result = await session.execute(stmt)
         message = result.scalar_one()
         assert message.is_failed is True  # noqa: S101
+
+    async def test_delete_published_older_than__deletes_expired(
+        self, repo: OutboxMessageRepository, task_repo: SQLAlchemyRepository[Task], session: AsyncSession
+    ) -> None:
+        task = await _create_task(task_repo)
+        msg = await repo.create(routing_key="task.created", aggregate_id=task.id, payload={})
+
+        await repo.mark_messages_as_published([msg.id])
+
+        old_date = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=48)
+        await repo.update(msg.id, created_at=old_date)
+
+        deleted = await repo.delete_published_older_than(ttl_hours=24, batch_size=100)
+
+        assert deleted == 1  # noqa: S101
+
+        stmt = select(OutboxMessage).where(OutboxMessage.id == msg.id)
+        result = await session.execute(stmt)
+        assert result.scalar_one_or_none() is None  # noqa: S101
+
+    async def test_delete_published_older_than__skips_recent(
+        self, repo: OutboxMessageRepository, task_repo: SQLAlchemyRepository[Task]
+    ) -> None:
+        """Свежие сообщения не удаляются."""
+        task = await _create_task(task_repo)
+        msg = await repo.create(routing_key="task.created", aggregate_id=task.id, payload={})
+        await repo.mark_messages_as_published([msg.id])
+
+        deleted = await repo.delete_published_older_than(ttl_hours=24, batch_size=100)
+
+        assert deleted == 0  # noqa: S101
+
+    async def test_delete_published_older_than__skips_unpublished(
+        self, repo: OutboxMessageRepository, task_repo: SQLAlchemyRepository[Task], session: AsyncSession
+    ) -> None:
+        """Неопубликованные сообщения не удаляются, даже если старые."""
+        task = await _create_task(task_repo)
+        msg = await repo.create(routing_key="task.created", aggregate_id=task.id, payload={})
+
+        old_date = datetime.now(UTC).replace(tzinfo=None) - timedelta(hours=48)
+        await repo.update(msg.id, created_at=old_date)
+
+        deleted = await repo.delete_published_older_than(ttl_hours=24, batch_size=100)
+
+        assert deleted == 0  # noqa: S101
+
+        stmt = select(OutboxMessage).where(OutboxMessage.id == msg.id)
+        result = await session.execute(stmt)
+        assert result.scalar_one_or_none() is not None  # noqa: S101

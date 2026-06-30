@@ -82,7 +82,8 @@ docker compose -f infrastructure/docker-compose.yml --env-file .env up -d
 3. **migration** — применение миграций Alembic. Это **однократная задача**: контейнер запускается, применяет миграции и завершается со статусом `Exited (0)`. Это **нормальное поведение**, не ошибка.
 4. **app** — FastAPI-приложение (зависит от migration и rabbitmq)
 5. **outbox-publish-worker** — воркер публикации outbox-сообщений (зависит от migration и rabbitmq)
-6. **dlq-consumer-worker** — воркер обработки DLQ-сообщений (зависит от migration и rabbitmq)
+6. **outbox-cleanup-worker** — воркер очистки устаревших outbox-сообщений (зависит от migration)
+7. **dlq-consumer-worker** — воркер обработки DLQ-сообщений (зависит от migration и rabbitmq)
 
 **Healthcheck:**
 
@@ -91,14 +92,15 @@ docker compose -f infrastructure/docker-compose.yml --env-file .env up -d
 
 ### 2.3. Сервисы
 
-| Сервис                  | Контейнер                      | Порты (хост:контейнер)                                     | Зависимости         |
-| ----------------------- | ------------------------------ | ---------------------------------------------------------- | ------------------- |
-| `postgres`              | `task_processor_postgres`      | `127.0.0.1:5432:${POSTGRES_PORT}`                          | —                   |
-| `rabbitmq`              | `task_processor_rabbitmq`      | `127.0.0.1:5672:${RABBITMQ_PORT}`, `127.0.0.1:15672:15672` | —                   |
-| `migration`             | `task_processor_migration`     | —                                                          | postgres (healthy)  |
-| `app`                   | `task_processor_app`           | `127.0.0.1:8000:8000`                                      | migration, rabbitmq |
-| `outbox-publish-worker` | `task_processor_outbox_worker` | —                                                          | migration, rabbitmq |
-| `dlq-consumer-worker`   | `task_processor_dlq_worker`    | —                                                          | migration, rabbitmq |
+| Сервис                  | Контейнер                              | Порты (хост:контейнер)                                     | Зависимости         |
+| ----------------------- | -------------------------------------- | ---------------------------------------------------------- | ------------------- |
+| `postgres`              | `task_processor_postgres`              | `127.0.0.1:5432:${POSTGRES_PORT}`                          | —                   |
+| `rabbitmq`              | `task_processor_rabbitmq`              | `127.0.0.1:5672:${RABBITMQ_PORT}`, `127.0.0.1:15672:15672` | —                   |
+| `migration`             | `task_processor_migration`             | —                                                          | postgres (healthy)  |
+| `app`                   | `task_processor_app`                   | `127.0.0.1:8000:8000`                                      | migration, rabbitmq |
+| `outbox-publish-worker` | `task_processor_outbox_worker`         | —                                                          | migration, rabbitmq |
+| `outbox-cleanup-worker` | `task_processor_outbox_cleanup_worker` | —                                                          | migration           |
+| `dlq-consumer-worker`   | `task_processor_dlq_worker`            | —                                                          | migration, rabbitmq |
 
 ### 2.4. Проверка
 

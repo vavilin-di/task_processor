@@ -34,3 +34,14 @@ class OutboxMessageService:
 
             if len(published_message_ids) > 0:
                 await self._outbox_messages_repository.mark_messages_as_published(published_message_ids)
+
+
+class OutboxCleanupService:
+
+    def __init__(self, outbox_messages_repository: OutboxMessageRepository, session: AsyncSession) -> None:
+        self._outbox_messages_repository = outbox_messages_repository
+        self._session = session
+
+    async def cleanup(self, ttl_hours: int, batch_size: int) -> int:
+        async with self._session.begin():
+            return await self._outbox_messages_repository.delete_published_older_than(ttl_hours, batch_size)

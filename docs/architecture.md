@@ -68,6 +68,17 @@
 │  │          DLQ Consumer Worker                      │              │
 │  │  (читает DLQ, retry или запись в БД)              │              │
 │  └───────────────────────────────────────────────────┘              │
+│                                                                     │
+│  ┌───────────────────────────────────────────────────┐              │
+│  │     Outbox Cleanup Worker                          │              │
+│  │  (удаляет опубликованные сообщения старше TTL)     │              │
+│  └──────────────────────┬────────────────────────────┘              │
+│                         │                                           │
+│                         ▼                                           │
+│                 ┌──────────────┐                                    │
+│                 │  PostgreSQL  │                                    │
+│                 │  (DELETE)    │                                    │
+│                 └──────────────┘                                    │
 └─────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -82,7 +93,7 @@
 | [`DatabaseProvider`](src/di.py:19)             | `APP`     | [`engine`](src/di.py:22), [`session_factory`](src/di.py:26)                                                         |
 | [`DatabaseProvider.get_session`](src/di.py:29) | `REQUEST` | [`AsyncSession`](src/di.py:30)                                                                                      |
 | [`RepositoryProvider`](src/di.py:35)           | `REQUEST` | [`TaskRepository`](src/di.py:37), [`OutboxMessageRepository`](src/di.py:41), [`DLQMessageRepository`](src/di.py:45) |
-| [`ServiceProvider`](src/di.py:49)              | `REQUEST` | [`TaskService`](src/di.py:51), [`OutboxMessageService`](src/di.py:57)                                               |
+| [`ServiceProvider`](src/di.py:49)              | `REQUEST` | [`TaskService`](src/di.py:51), [`OutboxMessageService`](src/di.py:57), [`OutboxCleanupService`](src/di.py:62)       |
 
 ---
 

@@ -1,7 +1,9 @@
 from collections.abc import AsyncGenerator, Iterable
+from datetime import timedelta
 from typing import Any
 
-from sqlalchemy import func, not_, select, update
+from sqlalchemy import delete, func, not_, select, update
+from sqlalchemy.sql import true
 
 from src.database.models.outbox_messages import OutboxMessage as OutboxMessage
 
@@ -44,3 +46,24 @@ class OutboxMessageRepository(SQLAlchemyRepository[OutboxMessage]):
             raise AssertionError(f"OutboxMessage с id={task_id} не найдено")
         if len(updated_errors) >= MAX_PUBLISH_ERRORS_COUNT:
             await self._session.execute(update(OutboxMessage).where(OutboxMessage.id == task_id).values(is_failed=True))
+
+    async def delete_published_older_than(self, ttl_hours: int, batch_size: int) -> int:
+        timestamp_treshold = func.now() - timedelta(hours=ttl_hours)
+
+        get_ids_to_delete_cte = (
+            select(OutboxMessage.id)
+            .where(OutboxMessage.is_published == true(), OutboxMessage.created_at < timestamp_treshold)
+            .limit(batch_size)
+            .cte("ids_to_delete")
+        )
+
+        get_deleted_ids_cte = (
+            delete(OutboxMessage)
+            .where(OutboxMessage.id.in_(select(get_ids_to_delete_cte.c.id)))
+            .returning(OutboxMessage.id)
+            .cte("deleted")
+        )
+
+        count_stmt = select(func.count()).select_from(get_deleted_ids_cte)
+        result = await self._session.execute(count_stmt)
+        return result.scalar_one()

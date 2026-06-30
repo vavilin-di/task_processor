@@ -26,6 +26,9 @@ start_outbox_publish_worker:
 start_dlq_consumer_worker:
 	uv run -m src.workers.dlq_consumer.run_dlq_consumer_worker
 
+start_outbox_cleanup_worker:
+	uv run -m src.workers.outbox_cleanup.run_outbox_cleanup_worker
+
 start_main_app:
 	uv run uvicorn src:app --host $(HOST) --port $(PORT) --workers $(WORKERS_COUNT)
 

@@ -37,36 +37,40 @@ make dev
 
 Файл `.env` должен находиться в корне проекта (`src/settings/common.py` ищет `.env` относительно `BASE_DIR`).
 
-| Переменная                | Тип                                    | Значение по умолчанию                    | Описание                                                                             |
-| ------------------------- | -------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------ |
-| **PostgreSQL**            |                                        |                                          |                                                                                      |
-| `POSTGRES_HOST`           | `str`                                  | —                                        | Хост PostgreSQL                                                                      |
-| `POSTGRES_PORT`           | `int`                                  | —                                        | Порт PostgreSQL                                                                      |
-| `POSTGRES_USER`           | `str`                                  | —                                        | Пользователь PostgreSQL                                                              |
-| `POSTGRES_PASSWORD`       | `str`                                  | —                                        | Пароль PostgreSQL                                                                    |
-| `POSTGRES_DATABASE`       | `str`                                  | —                                        | Имя базы данных                                                                      |
-| `POSTGRES_POOL_SIZE`      | `int`                                  | —                                        | Размер пула соединений                                                               |
-| `POSTGRES_MAX_OVERFLOW`   | `int`                                  | —                                        | Максимальное количество соединений сверх пула                                        |
-| `POSTGRES_POOL_TIMEOUT`   | `int`                                  | —                                        | Таймаут ожидания соединения из пула (сек)                                            |
-| `POSTGRES_POOL_RECYCLE`   | `int`                                  | —                                        | Время переиспользования соединения (сек)                                             |
-| **RabbitMQ**              |                                        |                                          |                                                                                      |
-| `RABBITMQ_HOST`           | `str`                                  | —                                        | Хост RabbitMQ                                                                        |
-| `RABBITMQ_PORT`           | `int`                                  | —                                        | Порт RabbitMQ                                                                        |
-| `RABBITMQ_USER`           | `str`                                  | —                                        | Пользователь RabbitMQ                                                                |
-| `RABBITMQ_PASSWORD`       | `str`                                  | —                                        | Пароль RabbitMQ                                                                      |
-| `RABBITMQ_VIRTUAL_HOST`   | `str`                                  | —                                        | Virtual host RabbitMQ                                                                |
-| `RABBITMQ_PREFETCH_COUNT` | `int`                                  | —                                        | Количество сообщений, выдаваемых потребителю за раз                                  |
-| `RABBITMQ_HEARTBEAT`      | `int`                                  | —                                        | Интервал heartbeat (сек)                                                             |
-| **Приложение**            |                                        |                                          |                                                                                      |
-| `APP_TITLE`               | `str`                                  | `Асинхронный сервис управления задачами` | Название приложения                                                                  |
-| `APP_VERSION`             | `str`                                  | `0.1.0`                                  | Версия приложения                                                                    |
-| `APP_ENV`                 | `Literal["development", "production"]` | `development`                            | Окружение                                                                            |
-| `DEBUG`                   | `bool`                                 | `False`                                  | Режим отладки (автоматически устанавливается в `True` при `APP_ENV != "production"`) |
-| `LOG_LEVEL`               | `str`                                  | `INFO`                                   | Уровень логирования                                                                  |
-| `API_PREFIX`              | `str`                                  | `/api`                                   | Префикс пути API                                                                     |
-| `API_VERSION_PREFIX`      | `str`                                  | `/v1`                                    | Префикс версии API                                                                   |
-| `ALLOWED_HOSTS`           | `list[str]`                            | `["localhost", "127.0.0.1"]`             | Список разрешённых хостов                                                            |
-| `CORS_ORIGINS`            | `list[AnyHttpUrl]`                     | `[]`                                     | Разрешённые CORS-источники                                                           |
+| Переменная                    | Тип                                    | Значение по умолчанию                    | Описание                                                                             |
+| ----------------------------- | -------------------------------------- | ---------------------------------------- | ------------------------------------------------------------------------------------ |
+| **PostgreSQL**                |                                        |                                          |                                                                                      |
+| `POSTGRES_HOST`               | `str`                                  | —                                        | Хост PostgreSQL                                                                      |
+| `POSTGRES_PORT`               | `int`                                  | —                                        | Порт PostgreSQL                                                                      |
+| `POSTGRES_USER`               | `str`                                  | —                                        | Пользователь PostgreSQL                                                              |
+| `POSTGRES_PASSWORD`           | `str`                                  | —                                        | Пароль PostgreSQL                                                                    |
+| `POSTGRES_DATABASE`           | `str`                                  | —                                        | Имя базы данных                                                                      |
+| `POSTGRES_POOL_SIZE`          | `int`                                  | —                                        | Размер пула соединений                                                               |
+| `POSTGRES_MAX_OVERFLOW`       | `int`                                  | —                                        | Максимальное количество соединений сверх пула                                        |
+| `POSTGRES_POOL_TIMEOUT`       | `int`                                  | —                                        | Таймаут ожидания соединения из пула (сек)                                            |
+| `POSTGRES_POOL_RECYCLE`       | `int`                                  | —                                        | Время переиспользования соединения (сек)                                             |
+| **RabbitMQ**                  |                                        |                                          |                                                                                      |
+| `RABBITMQ_HOST`               | `str`                                  | —                                        | Хост RabbitMQ                                                                        |
+| `RABBITMQ_PORT`               | `int`                                  | —                                        | Порт RabbitMQ                                                                        |
+| `RABBITMQ_USER`               | `str`                                  | —                                        | Пользователь RabbitMQ                                                                |
+| `RABBITMQ_PASSWORD`           | `str`                                  | —                                        | Пароль RabbitMQ                                                                      |
+| `RABBITMQ_VIRTUAL_HOST`       | `str`                                  | —                                        | Virtual host RabbitMQ                                                                |
+| `RABBITMQ_PREFETCH_COUNT`     | `int`                                  | —                                        | Количество сообщений, выдаваемых потребителю за раз                                  |
+| `RABBITMQ_HEARTBEAT`          | `int`                                  | —                                        | Интервал heartbeat (сек)                                                             |
+| **Приложение**                |                                        |                                          |                                                                                      |
+| `APP_TITLE`                   | `str`                                  | `Асинхронный сервис управления задачами` | Название приложения                                                                  |
+| `APP_VERSION`                 | `str`                                  | `0.1.0`                                  | Версия приложения                                                                    |
+| `APP_ENV`                     | `Literal["development", "production"]` | `development`                            | Окружение                                                                            |
+| `DEBUG`                       | `bool`                                 | `False`                                  | Режим отладки (автоматически устанавливается в `True` при `APP_ENV != "production"`) |
+| `LOG_LEVEL`                   | `str`                                  | `INFO`                                   | Уровень логирования                                                                  |
+| `API_PREFIX`                  | `str`                                  | `/api`                                   | Префикс пути API                                                                     |
+| `API_VERSION_PREFIX`          | `str`                                  | `/v1`                                    | Префикс версии API                                                                   |
+| `ALLOWED_HOSTS`               | `list[str]`                            | `["localhost", "127.0.0.1"]`             | Список разрешённых хостов                                                            |
+| `CORS_ORIGINS`                | `list[AnyHttpUrl]`                     | `[]`                                     | Разрешённые CORS-источники                                                           |
+| **Outbox Cleanup**            |                                        |                                          |                                                                                      |
+| `OUTBOX_TTL_HRS`              | `int`                                  | `24`                                     | Через сколько часов после публикации удалять outbox-сообщения                        |
+| `OUTBOX_CLEANUP_BATCH_SIZE`   | `int`                                  | `1000`                                   | Размер батча для удаления outbox-сообщений                                           |
+| `OUTBOX_CLEANUP_INTERVAL_SEC` | `int`                                  | `3600`                                   | Интервал между запусками cleanup-воркера (сек)                                       |
 
 ---
 
@@ -80,6 +84,7 @@ make dev
 | `make check_models`                | Проверить соответствие моделей SQLAlchemy и миграций (`alembic check`)                        |
 | `make dev`                         | Запуск dev-сервера: `uvicorn src:app --host 127.0.0.1 --port 8080 --reload`                   |
 | `make start_outbox_publish_worker` | Запуск воркера публикации outbox-сообщений                                                    |
+| `make start_outbox_cleanup_worker` | Запуск воркера очистки устаревших outbox-сообщений                                            |
 | `make start_dlq_consumer_worker`   | Запуск воркера обработки DLQ (Dead Letter Queue)                                              |
 | `make start_main_app`              | Production-запуск: `uvicorn src:app --host $(HOST) --port $(PORT) --workers $(WORKERS_COUNT)` |
 | `make test`                        | Запуск всех тестов                                                                            |

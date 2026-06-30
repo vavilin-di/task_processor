@@ -11,7 +11,7 @@ from src.database.models.tasks import Task
 from src.repositories.dlq_messages import DLQMessageRepository
 from src.repositories.outbox_messages import OutboxMessageRepository
 from src.repositories.tasks import TaskRepository
-from src.services.outbox_messages import OutboxMessageService
+from src.services.outbox_messages import OutboxCleanupService, OutboxMessageService
 from src.services.tasks import TaskService
 from src.settings import Settings, get_settings
 
@@ -58,6 +58,12 @@ class ServiceProvider(Provider):
         self, broker: RabbitBroker, outbox_repository: OutboxMessageRepository, session: AsyncSession
     ) -> OutboxMessageService:
         return OutboxMessageService(outbox_repository, broker, session)
+
+    @provide(scope=Scope.REQUEST)
+    def get_outbox_cleanup_service(
+        self, outbox_repository: OutboxMessageRepository, session: AsyncSession
+    ) -> OutboxCleanupService:
+        return OutboxCleanupService(outbox_repository, session)
 
 
 class BrokerProvider(Provider):

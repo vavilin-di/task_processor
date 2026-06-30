@@ -37,28 +37,32 @@ cp .env.example .env
 
 #### Переменные окружения
 
-| Переменная                | По умолчанию                 | Описание                                                 |
-| ------------------------- | ---------------------------- | -------------------------------------------------------- |
-| `APP_ENV`                 | `development`                | Окружение: `development` / `production`                  |
-| `LOG_LEVEL`               | `INFO`                       | Уровень логирования: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
-| `ALLOWED_HOSTS`           | `["localhost", "127.0.0.1"]` | Белый список разрешённых хостов                          |
-| `CORS_ORIGINS`            | `[]`                         | Разрешённые CORS-источники (список URL)                  |
-| `POSTGRES_HOST`           | —                            | Хост PostgreSQL                                          |
-| `POSTGRES_PORT`           | `5432`                       | Порт PostgreSQL                                          |
-| `POSTGRES_USER`           | —                            | Пользователь PostgreSQL                                  |
-| `POSTGRES_PASSWORD`       | —                            | Пароль PostgreSQL (SecretStr — не выводится в логах)     |
-| `POSTGRES_DATABASE`       | —                            | Имя базы данных                                          |
-| `POSTGRES_POOL_SIZE`      | `10`                         | Размер пула соединений                                   |
-| `POSTGRES_MAX_OVERFLOW`   | `20`                         | Максимальное количество соединений сверх пула            |
-| `POSTGRES_POOL_TIMEOUT`   | `30`                         | Таймаут ожидания соединения из пула (сек)                |
-| `POSTGRES_POOL_RECYCLE`   | `1800`                       | Время переиспользования соединения (сек)                 |
-| `RABBITMQ_HOST`           | —                            | Хост RabbitMQ                                            |
-| `RABBITMQ_PORT`           | `5672`                       | Порт RabbitMQ (AMQP)                                     |
-| `RABBITMQ_USER`           | —                            | Пользователь RabbitMQ                                    |
-| `RABBITMQ_PASSWORD`       | —                            | Пароль RabbitMQ (SecretStr — не выводится в логах)       |
-| `RABBITMQ_VIRTUAL_HOST`   | `/`                          | Virtual host RabbitMQ                                    |
-| `RABBITMQ_PREFETCH_COUNT` | `10`                         | Количество сообщений, получаемых за раз                  |
-| `RABBITMQ_HEARTBEAT`      | `60`                         | Интервал heartbeat (сек)                                 |
+| Переменная                    | По умолчанию                 | Описание                                                 |
+| ----------------------------- | ---------------------------- | -------------------------------------------------------- |
+| `APP_ENV`                     | `development`                | Окружение: `development` / `production`                  |
+| `LOG_LEVEL`                   | `INFO`                       | Уровень логирования: `DEBUG`, `INFO`, `WARNING`, `ERROR` |
+| `ALLOWED_HOSTS`               | `["localhost", "127.0.0.1"]` | Белый список разрешённых хостов                          |
+| `CORS_ORIGINS`                | `[]`                         | Разрешённые CORS-источники (список URL)                  |
+| `POSTGRES_HOST`               | —                            | Хост PostgreSQL                                          |
+| `POSTGRES_PORT`               | `5432`                       | Порт PostgreSQL                                          |
+| `POSTGRES_USER`               | —                            | Пользователь PostgreSQL                                  |
+| `POSTGRES_PASSWORD`           | —                            | Пароль PostgreSQL (SecretStr — не выводится в логах)     |
+| `POSTGRES_DATABASE`           | —                            | Имя базы данных                                          |
+| `POSTGRES_POOL_SIZE`          | `10`                         | Размер пула соединений                                   |
+| `POSTGRES_MAX_OVERFLOW`       | `20`                         | Максимальное количество соединений сверх пула            |
+| `POSTGRES_POOL_TIMEOUT`       | `30`                         | Таймаут ожидания соединения из пула (сек)                |
+| `POSTGRES_POOL_RECYCLE`       | `1800`                       | Время переиспользования соединения (сек)                 |
+| `RABBITMQ_HOST`               | —                            | Хост RabbitMQ                                            |
+| `RABBITMQ_PORT`               | `5672`                       | Порт RabbitMQ (AMQP)                                     |
+| `RABBITMQ_USER`               | —                            | Пользователь RabbitMQ                                    |
+| `RABBITMQ_PASSWORD`           | —                            | Пароль RabbitMQ (SecretStr — не выводится в логах)       |
+| `RABBITMQ_VIRTUAL_HOST`       | `/`                          | Virtual host RabbitMQ                                    |
+| `RABBITMQ_PREFETCH_COUNT`     | `10`                         | Количество сообщений, получаемых за раз                  |
+| `RABBITMQ_HEARTBEAT`          | `60`                         | Интервал heartbeat (сек)                                 |
+| **Outbox Cleanup**            |                              |                                                          |
+| `OUTBOX_TTL_HRS`              | `24`                         | Через сколько часов после публикации удалять сообщения   |
+| `OUTBOX_CLEANUP_BATCH_SIZE`   | `1000`                       | Размер батча для удаления                                |
+| `OUTBOX_CLEANUP_INTERVAL_SEC` | `3600`                       | Интервал между запусками cleanup-воркера (сек)           |
 
 ### 2.3. Установка зависимостей
 

@@ -35,6 +35,10 @@ class Settings(BaseSettings):
     postgres: PostgresSettings = PostgresSettings()
     rabbit_mq: RabbitMQSettings = RabbitMQSettings()
 
+    OUTBOX_TTL_HRS: int = 24
+    OUTBOX_CLEANUP_BATCH_SIZE: int = 1000
+    OUTBOX_CLEANUP_INTERVAL_SEC: int = 3600
+
     @model_validator(mode="after")
     def set_debug(self) -> Self:
         self.DEBUG = self.APP_ENV != "production"

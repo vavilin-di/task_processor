@@ -3,7 +3,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from src.services.outbox_messages import OutboxMessageService
+from src.services.outbox_messages import OutboxCleanupService, OutboxMessageService
 
 pytestmark = pytest.mark.unit
 
@@ -122,3 +122,46 @@ class TestOutboxMessageService:
 
         mock_repo.add_error.assert_awaited_once_with(1, "Timeout")
         mock_repo.mark_messages_as_published.assert_awaited_once_with([2])
+
+
+@pytest.fixture
+def mock_cleanup_repo() -> AsyncMock:
+    """Репозиторий для OutboxCleanupService."""
+    repo = AsyncMock()
+    repo.delete_published_older_than = AsyncMock()
+    return repo
+
+
+@pytest.fixture
+def cleanup_service(mock_session: MagicMock, mock_cleanup_repo: AsyncMock) -> OutboxCleanupService:
+    return OutboxCleanupService(outbox_messages_repository=mock_cleanup_repo, session=mock_session)
+
+
+class TestOutboxCleanupService:
+    """Unit-тесты для OutboxCleanupService.cleanup."""
+
+    async def test_cleanup__deletes_expired_messages(
+        self,
+        cleanup_service: OutboxCleanupService,
+        mock_cleanup_repo: AsyncMock,
+    ) -> None:
+        """Успешное удаление — возвращается количество удалённых записей."""
+        mock_cleanup_repo.delete_published_older_than.return_value = 42
+
+        deleted = await cleanup_service.cleanup(ttl_hours=24, batch_size=100)
+
+        assert deleted == 42  # noqa: S101, PLR2004
+        mock_cleanup_repo.delete_published_older_than.assert_awaited_once_with(24, 100)
+
+    async def test_cleanup__nothing_to_delete(
+        self,
+        cleanup_service: OutboxCleanupService,
+        mock_cleanup_repo: AsyncMock,
+    ) -> None:
+        """Нет сообщений для удаления — возвращается 0."""
+        mock_cleanup_repo.delete_published_older_than.return_value = 0
+
+        deleted = await cleanup_service.cleanup(ttl_hours=24, batch_size=100)
+
+        assert deleted == 0  # noqa: S101
+        mock_cleanup_repo.delete_published_older_than.assert_awaited_once_with(24, 100)

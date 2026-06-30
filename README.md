@@ -56,7 +56,7 @@
                         │
 ┌───────────────────────▼─────────────────────────────────┐
 │                    Services (Бизнес-логика)               │
-│              TaskService · OutboxMessageService           │
+│     TaskService · OutboxMessageService · OutboxCleanup   │
 └───────────────────────┬─────────────────────────────────┘
                         │
 ┌───────────────────────▼─────────────────────────────────┐
@@ -363,6 +363,7 @@ Multi-stage сборка:
 | `migration`             | Однократный запуск миграций Alembic |
 | `app`                   | FastAPI приложение (uvicorn)        |
 | `outbox-publish-worker` | Outbox Publisher Worker             |
+| `outbox-cleanup-worker` | Outbox Cleanup Worker (TTL-based)   |
 | `dlq-consumer-worker`   | DLQ Consumer Worker                 |
 
 ```bash
