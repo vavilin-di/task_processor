@@ -211,7 +211,7 @@ class TestTaskServiceGetTasks:
             result = await service.get_tasks(limit=10, cursor="cursor123", filter_=task_filter)
 
         mock_task_repo.get_all.assert_awaited_once_with("cursor123", 10, task_filter.model_dump(exclude_none=True))
-        assert len(result.items) == 1  # noqa: S101, PLR2004
+        assert len(result.items) == 1  # noqa: S101
         assert result.next_cursor is None  # noqa: S101
         assert result.has_next is False  # noqa: S101
 
